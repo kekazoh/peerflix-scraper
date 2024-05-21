@@ -15,7 +15,6 @@ interface Torrent {
 export const decodeTorrentFile = async (torrent: Buffer): Promise<Torrent | null> => {
   try {
     const fTorrent = Bencode.decode(torrent);
-    console.log('DECODED TORRENT', fTorrent);
     const result = {
       info: fTorrent.info,
       infoBuffer: Bencode.encode(fTorrent.info),

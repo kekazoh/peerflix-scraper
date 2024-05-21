@@ -40,9 +40,7 @@ abstract class Scraper {
     const torrentfile = await fetch(fullUrl, {
       headers,
     });
-    console.log('TORRENT FILE STATUS', torrentfile.status);
     const torrdata = await torrentfile.arrayBuffer();
-    console.log('TORRENT FILE', torrdata);
     const torrent = await decodeTorrentFile(Buffer.from(torrdata)); // Convert ArrayBuffer to Buffer
     const magnet = magnetURIEncode(torrent as Torrent);
     return {
