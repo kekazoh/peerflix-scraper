@@ -76,7 +76,7 @@ export class SolidtorrentsScraper extends Scraper {
         //console.log('SOLIDTORRENTS magnetUrl', magnetUrl);
         const magnetData = await this.getMagnetFromTorrentUrl(torrentUrl as string);
         let fileIdx = undefined;
-        if (magnetData.files?.length && !storageKey.endsWith(':undefined:undefined')) {
+        if (magnetData.files?.length && storageKey.includes(':')) { // Si es un episodio, buscar el archivo correcto
           const [id, season, episode] = storageKey.split(':');
           console.log('id', id);
           const paddedEpisode = `${episode}`.padStart(2, '0');
@@ -100,8 +100,7 @@ export class SolidtorrentsScraper extends Scraper {
             quality: foundQuality,
             source: SOURCE,
           };
-          // produce
-          await this.producer.produce('magnets', JSON.stringify(magnet));          
+          results.push(magnet);
         }
       }
     }

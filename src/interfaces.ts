@@ -13,10 +13,10 @@ export interface Magnet {
   language: string;
   magnetUrl: string;
   quality: string;
-  peer: number;
-  seed: number;
+  peer?: number;
+  seed?: number;
   infoHash: string;
-  size: string;
+  size?: string;
   source: string;
 }
 
