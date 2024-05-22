@@ -2,6 +2,7 @@ import { strict as assert } from 'assert';
 import { YtsScraper } from './scrapers/ytsScraper';
 import { SolidtorrentsScraper } from './scrapers/solidtorrentsScraper';
 import Scraper from './scrapers/scraper';
+import { PopcorntimeScraper } from './scrapers/popcorntimeScraper';
 
 function initializeScraper(platform: string): Scraper {
   let scraper: Scraper;
@@ -12,6 +13,9 @@ function initializeScraper(platform: string): Scraper {
       break;
     case 'solidtorrents':
       scraper = new SolidtorrentsScraper();
+      break;
+    case 'popcorntime':
+      scraper = new PopcorntimeScraper();
       break;
     default:
       throw new Error(`Invalid platform: ${platform}`);

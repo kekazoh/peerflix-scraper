@@ -10,14 +10,15 @@ export interface ScraperRequest {
 }
 
 export interface Magnet {
+  infoHash: string;
   language: string;
   magnetUrl: string;
   quality: string;
+  source: string;
   peer?: number;
   seed?: number;
-  infoHash: string;
   size?: string;
-  source: string;
+  fileIdx?: number;
 }
 
 interface File {
