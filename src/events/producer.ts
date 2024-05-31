@@ -17,12 +17,11 @@ export class EventsProducer {
     await this.producer.connect();
   }
 
-  async produce(topic: string, message: string): Promise<void> {
+  async produce(topic: string, message: string, key: string): Promise<void> {
     const record: ProducerRecord = {
       topic,
-      messages: [{ value: message }],
+      messages: [{ value: message, key }],
     };
-
     await this.producer.send(record);
   }
 

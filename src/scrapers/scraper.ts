@@ -28,7 +28,7 @@ abstract class Scraper {
       for (const magnet of magnets) {
         const magnetMessage = { ...magnet, cacheId: message.cacheId };
         console.log('Producing magnet', magnetMessage);
-        await this.producer.produce('magnets', JSON.stringify(magnetMessage));
+        await this.producer.produce('magnets', JSON.stringify(magnetMessage), message.cacheId);
       }
     });
   }

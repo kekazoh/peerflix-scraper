@@ -36,7 +36,7 @@ export class PopcorntimeScraper extends Scraper {
   }
 
   protected processMessage(message: ScraperRequest): Promise<Magnet[]> {
-    if (message.seasonNumber && message.episodeNumber) {
+    if (message.seasonNum && message.episodeNum) {
       return this.getEpisodeLinks(
         message.imdbId,
         parseInt(message.tvdbId),
@@ -123,8 +123,9 @@ export class PopcorntimeScraper extends Scraper {
               magnet.size = magnet.size || magnetInfo.size || undefined;
               for (const [index, file] of (magnetInfo.files || []).entries()) {
                 const filename = Buffer.from(file.path[0]).toString();
-                if (torrent.file === filename) {
+                if (torrent.file.split('/').pop() === filename) {
                   magnet.fileIdx = index;
+                  break;
                 }
               }
             }

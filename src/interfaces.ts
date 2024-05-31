@@ -2,8 +2,8 @@ export interface ScraperRequest {
   imdbId: string;
   title: string;
   spanishTitle: string;
-  seasonNumber: string;
-  episodeNumber: string;
+  seasonNum: string;
+  episodeNum: string;
   tvdbId: string;
   year: number;
   cacheId: string;

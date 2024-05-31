@@ -10,11 +10,11 @@ const BASE_URL = 'https://solidtorrents.to';
 export class SolidtorrentsScraper extends Scraper {
   
   protected processMessage(message: ScraperRequest): Promise<Magnet[]> {
-    if (message.seasonNumber && message.episodeNumber) {
+    if (message.seasonNum && message.episodeNum) {
       return this.getEpisodeLinks(
         message.spanishTitle || message.title,
-        message.seasonNumber,
-        message.episodeNumber,
+        message.seasonNum,
+        message.episodeNum,
         message.cacheId,
       );
     } else {
