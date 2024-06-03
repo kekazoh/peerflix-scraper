@@ -7,7 +7,7 @@ export class EventsProducer {
 
   constructor() {
     this.kafka = new Kafka({ 
-      brokers: ['localhost:19092'],
+      brokers: [process.env.KAFKA || 'localhost:19092'],
       clientId: 'peerflix-scraper',
     });
     this.producer = this.kafka.producer();

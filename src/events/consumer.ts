@@ -9,7 +9,7 @@ export class EventsConsumer {
   constructor(groupId: string) {
     this.kafka = new Kafka({
       clientId: 'peerflix-scraper',
-      brokers: ['localhost:19092'],
+      brokers: [process.env.KAFKA || 'localhost:19092'],
     });
 
     this.consumer = this.kafka.consumer({ groupId });
