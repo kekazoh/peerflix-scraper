@@ -4,6 +4,7 @@ import { YtsScraper } from './scrapers/ytsScraper';
 import { SolidtorrentsScraper } from './scrapers/solidtorrentsScraper';
 import { PopcorntimeScraper } from './scrapers/popcorntimeScraper';
 import { DontorrentScraper } from './scrapers/dontorrentScraper';
+import { MejortorrentScraper } from './scrapers/mejortorrentScraper';
 
 function initializeScraper(platform: string): Scraper {
   let scraper: Scraper;
@@ -20,6 +21,9 @@ function initializeScraper(platform: string): Scraper {
       break;
     case 'dontorrent':
       scraper = new DontorrentScraper();
+      break;
+    case 'mejortorrent':
+      scraper = new MejortorrentScraper();
       break;
     default:
       throw new Error(`Invalid platform: ${platform}`);
