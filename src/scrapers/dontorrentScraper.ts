@@ -194,8 +194,19 @@ export class DontorrentScraper extends Scraper {
               `https:${link}`,
               this.baseUrl,
             );
+            let fileIdx = undefined;
+            if (magnetInfo.files?.length) {
+              const regex = new RegExp(`.*${season}.*${paddedEpisode}.*(.mp4|.mkv|.avi)`, 'g');
+              for (const [index, file] of (magnetInfo.files || []).entries()) {
+                const filename = Buffer.from(file.path[0]).toString();
+                if (regex.test(filename)) {
+                  fileIdx = index;
+                }
+              }
+            }
             const magnet = {
               ...magnetInfo,
+              fileIdx,
               language: 'es',
               quality: foundFormat,
               source: SOURCE,
