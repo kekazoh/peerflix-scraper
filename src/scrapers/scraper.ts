@@ -42,7 +42,12 @@ abstract class Scraper {
       headers,
     });
     const torrdata = await torrentfile.arrayBuffer();
-    const torrent = await decodeTorrentFile(Buffer.from(torrdata)); // Convert ArrayBuffer to Buffer
+    return this.getMagnetFromRawTorrent(Buffer.from(torrdata));
+  }
+
+  async getMagnetFromRawTorrent(rawTorrentFile: Buffer): Promise<MagnetData> {
+    const torrent = await decodeTorrentFile(rawTorrentFile); // Convert ArrayBuffer to Buffer
+    if (!torrent) throw new Error('Error decoding torrent file');
     const magnet = magnetURIEncode(torrent as Torrent);
     return {
       magnetUrl: magnet,

@@ -5,31 +5,25 @@ import { SolidtorrentsScraper } from './scrapers/solidtorrentsScraper';
 import { PopcorntimeScraper } from './scrapers/popcorntimeScraper';
 import { DontorrentScraper } from './scrapers/dontorrentScraper';
 import { MejortorrentScraper } from './scrapers/mejortorrentScraper';
+import { WolfmaxScraper } from './scrapers/wolfmaxScraper';
 
 function initializeScraper(platform: string): Scraper {
-  let scraper: Scraper;
-
   switch (platform) {
     case 'yts':
-      scraper = new YtsScraper();
-      break;
+      return new YtsScraper();
     case 'solidtorrents':
-      scraper = new SolidtorrentsScraper();
-      break;
+      return new SolidtorrentsScraper();
     case 'popcorntime':
-      scraper = new PopcorntimeScraper();
-      break;
+      return new PopcorntimeScraper();
     case 'dontorrent':
-      scraper = new DontorrentScraper();
-      break;
+      return new DontorrentScraper();
     case 'mejortorrent':
-      scraper = new MejortorrentScraper();
-      break;
+      return new MejortorrentScraper();
+    case 'wolfmax':
+      return new WolfmaxScraper();
     default:
       throw new Error(`Invalid platform: ${platform}`);
   }
-
-  return scraper;
 }
 
 if (require.main === module) {
