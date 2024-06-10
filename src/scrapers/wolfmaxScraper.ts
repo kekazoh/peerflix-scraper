@@ -2,7 +2,7 @@ import { TelegramClient } from 'telegram';
 import { StringSession } from 'telegram/sessions';
 import Scraper from './scraper';
 import { Magnet, ScraperRequest } from '../interfaces';
-import { extractQuality } from '../lib/strings';
+import { extractQuality, slugify } from '../lib/strings';
 import { strict as assert } from 'assert';
 
 interface TorrentMessage {
@@ -83,7 +83,7 @@ export class WolfmaxScraper extends Scraper {
     }
     console.log(`Searching for ${title} (${year}) in cache...`);
     const torrents = this.cache.filter(
-      (message: any) => message.message.toLowerCase().includes(`${title.toLowerCase().replace(/ /g, '_')}_${year}`));
+      (message: any) => slugify(message.message).includes(slugify(title)) && message.message.includes(`_${year} `));
     return this.getTorrentsInfo(torrents);
   }
 
@@ -94,8 +94,8 @@ export class WolfmaxScraper extends Scraper {
     }
     console.log('Searching for', title, seasonNum, episodeNum, 'in cache...');
     const torrents = this.cache.filter((message: any) =>
-      message.message.toLowerCase().includes(`${title.toLowerCase().replace(/ /g, '_')}`)
-      && message.message.includes(`Cap_${seasonNum}${episodeNum.padStart(2, '0')}`));
+      slugify(message.message).includes(slugify(title))
+      && message.message.includes(` #Cap_${seasonNum}${episodeNum.padStart(2, '0')} `));
     return this.getTorrentsInfo(torrents);
   }
   
@@ -126,7 +126,10 @@ export class WolfmaxScraper extends Scraper {
 
 if (require.main === module) {
   const scraper = new WolfmaxScraper();
-  scraper.getEpisodeLinks('Doctor Who', '1', '3').then((magnets) => {
+  scraper.getEpisodeLinks('Sweet Tooth', '3', '1').then((magnets) => {
+    console.log(magnets);
+  });
+  scraper.getEpisodeLinks('Sweet Tooth: El niño ciervo', '3', '7').then((magnets) => {
     console.log(magnets);
   });
 }
