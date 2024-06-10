@@ -6,6 +6,7 @@ import { extractQuality } from '../lib/strings';
 import { strict as assert } from 'assert';
 
 interface TorrentMessage {
+  id: number;
   message: string;
   file: {
     media: {
@@ -57,7 +58,7 @@ export class WolfmaxScraper extends Scraper {
     const messages = await this.client.getMessages(TELEGRAM_CHANNEL) as any as TorrentMessage[];
     return messages
       .filter((message: TorrentMessage) => (message.file?.media?.mimeType === 'application/x-bittorrent'))
-      .map((message: TorrentMessage) => ({ message: message.message, file: message.file.media }));
+      .map((message: TorrentMessage) => ({ message: message.message, file: message.file.media, id: message.id }));
   }
 
   protected processMessage(message: ScraperRequest): Promise<Magnet[]> {
@@ -66,35 +67,34 @@ export class WolfmaxScraper extends Scraper {
         message.spanishTitle || message.title,
         message.seasonNum,
         message.episodeNum,
-        message.cacheId,
       );
     } else {
       return this.getMovieLinks(
         message.spanishTitle || message.title,
         message.year,
-        message.cacheId,
       );
     }
   }
 
-  async getMovieLinks(title: string, year: number, cacheId: string): Promise<Magnet[]> {
+  async getMovieLinks(title: string, year: number): Promise<Magnet[]> {
     while (!this.cache) {
       console.log('Waiting for cache...');
       await delay(1000);
     }
-    console.log(`Searching for ${cacheId}: ${title} (${year}) in cache...`);
-    const torrents = this.cache.filter((message: any) => message.message.includes(`${title.replace(/ /g, '_')}_${year}`));
+    console.log(`Searching for ${title} (${year}) in cache...`);
+    const torrents = this.cache.filter(
+      (message: any) => message.message.toLowerCase().includes(`${title.toLowerCase().replace(/ /g, '_')}_${year}`));
     return this.getTorrentsInfo(torrents);
   }
 
-  async getEpisodeLinks(title: string, seasonNum: string, episodeNum: string, cacheId: string): Promise<Magnet[]> {
+  async getEpisodeLinks(title: string, seasonNum: string, episodeNum: string): Promise<Magnet[]> {
     while (!this.cache) {
       console.log('Waiting for cache...');
       await delay(1000);
     }
-    console.log('Searching for', cacheId, title, seasonNum, episodeNum, 'in cache...');
+    console.log('Searching for', title, seasonNum, episodeNum, 'in cache...');
     const torrents = this.cache.filter((message: any) =>
-      message.message.includes(`${title.replace(/ /g, '_')}`) 
+      message.message.toLowerCase().includes(`${title.toLowerCase().replace(/ /g, '_')}`)
       && message.message.includes(`Cap_${seasonNum}${episodeNum.padStart(2, '0')}`));
     return this.getTorrentsInfo(torrents);
   }
@@ -102,18 +102,22 @@ export class WolfmaxScraper extends Scraper {
   async getTorrentsInfo(torrents: any[]): Promise<Magnet[]> {
     const magnets: Magnet[] = [];
     for (const torrent of torrents) {
-      console.log(torrent.message);
-      const buffer = await this.client.downloadMedia(torrent.file) as Buffer;
-      // Extract magnet link from torrent.file (Buffer)
-      const magnetData = await this.getMagnetFromRawTorrent(buffer);
-      magnets.push({
-        magnetUrl: magnetData.magnetUrl,
-        infoHash: magnetData.infoHash,
-        size: magnetData.size,
-        source: 'Wolfmax4k',
-        quality: extractQuality(torrent.message),
-        language: 'es',
-      });
+      console.log('Updating message', torrent.id);
+      const updatedMessage = (await this.client.getMessages(TELEGRAM_CHANNEL, { ids: torrent.id }))[0] as any;
+      if (updatedMessage.file?.media) {
+        console.log(updatedMessage.message);
+        const buffer = await this.client.downloadMedia(updatedMessage.file.media) as Buffer;
+        // Extract magnet link from torrent.file (Buffer)
+        const magnetData = await this.getMagnetFromRawTorrent(buffer);
+        magnets.push({
+          magnetUrl: magnetData.magnetUrl,
+          infoHash: magnetData.infoHash,
+          size: magnetData.size,
+          source: 'Wolfmax4k',
+          quality: extractQuality(torrent.message),
+          language: 'es',
+        });
+      }
     }
     return magnets;
   }
@@ -122,7 +126,7 @@ export class WolfmaxScraper extends Scraper {
 
 if (require.main === module) {
   const scraper = new WolfmaxScraper();
-  scraper.getEpisodeLinks('Doctor Who', '1', '5', 'tt123123:1:5').then((magnets) => {
+  scraper.getEpisodeLinks('Doctor Who', '1', '3').then((magnets) => {
     console.log(magnets);
   });
 }
