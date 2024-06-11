@@ -64,21 +64,18 @@ export class WolfmaxScraper extends Scraper {
   }
 
   protected processMessage(message: ScraperRequest): Promise<Magnet[]> {
-    console.log('WOLFMAX: Processing message', message);
+    if (!message.title) throw new Error('Title is required');
     if (message.seasonNum && message.episodeNum) {
       return this.getEpisodeLinks(
         message.spanishTitle || message.title,
         message.seasonNum,
         message.episodeNum,
       );
-    } else if (message.title && message.year) {
+    } else {
       return this.getMovieLinks(
         message.spanishTitle || message.title,
         message.year,
       );
-    } else {
-      console.log('Invalid message', message);
-      return Promise.resolve([]);
     }
   }
 

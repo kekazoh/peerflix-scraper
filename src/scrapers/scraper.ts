@@ -23,12 +23,16 @@ abstract class Scraper {
     await this.producer.connect();
     // Start consuming messages
     await this.consumer.consume('scrapingRequests', async (message: ScraperRequest) => {
-      // Process the message
-      const magnets = await this.processMessage(message);
-      for (const magnet of magnets) {
-        const magnetMessage = { ...magnet, cacheId: message.cacheId };
-        console.log('Producing magnet', magnetMessage);
-        await this.producer.produce('magnets', JSON.stringify(magnetMessage), message.cacheId);
+      try {
+        // Process the message
+        const magnets = await this.processMessage(message);
+        for (const magnet of magnets) {
+          const magnetMessage = { ...magnet, cacheId: message.cacheId };
+          console.log('Producing magnet', magnetMessage);
+          await this.producer.produce('magnets', JSON.stringify(magnetMessage), message.cacheId);
+        }
+      } catch (err) {
+        console.error('Error processing message', err);
       }
     });
   }

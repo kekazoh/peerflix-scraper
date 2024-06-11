@@ -36,6 +36,7 @@ export class DontorrentScraper extends Scraper {
   }
 
   protected processMessage(message: ScraperRequest): Promise<Magnet[]> {
+    if (!message.title) throw new Error('Title is required');
     if (message.seasonNum && message.episodeNum) {
       return this.getEpisodeLinks(
         message.spanishTitle || message.title,

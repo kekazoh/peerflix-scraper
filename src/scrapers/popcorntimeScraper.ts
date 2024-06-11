@@ -36,6 +36,7 @@ export class PopcorntimeScraper extends Scraper {
   }
 
   protected processMessage(message: ScraperRequest): Promise<Magnet[]> {
+    if (!message.imdbId) throw new Error('IMDB ID is required');
     if (message.seasonNum && message.episodeNum) {
       return this.getEpisodeLinks(
         message.imdbId,

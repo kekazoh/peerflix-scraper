@@ -10,6 +10,7 @@ const BASE_URL = 'https://solidtorrents.to';
 export class SolidtorrentsScraper extends Scraper {
   
   protected processMessage(message: ScraperRequest): Promise<Magnet[]> {
+    if (!message.title) throw new Error('Title is required');
     if (message.seasonNum && message.episodeNum) {
       return this.getEpisodeLinks(
         message.spanishTitle || message.title,
@@ -85,6 +86,7 @@ export class SolidtorrentsScraper extends Scraper {
             const filename = Buffer.from(file.path[0]).toString();
             if (regex.test(filename)) {
               fileIdx = index;
+              break;
             }
           }
         }
