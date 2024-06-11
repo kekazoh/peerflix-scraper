@@ -47,14 +47,16 @@ export class WolfmaxScraper extends Scraper {
   }
 
   async getCacheFromTelegram(): Promise<any> {
+    if (!this.client.connected) {
+      await this.client.start({
+        phoneNumber: async () => '',
+        phoneCode: async () => '',
+        onError: (err) => console.log(err),
+      });
+    }
     if (this.cache) {
       return this.cache;
     }
-    await this.client.start({
-      phoneNumber: async () => '',
-      phoneCode: async () => '',
-      onError: (err) => console.log(err),
-    });
     const messages = await this.client.getMessages(TELEGRAM_CHANNEL) as any as TorrentMessage[];
     return messages
       .filter((message: TorrentMessage) => (message.file?.media?.mimeType === 'application/x-bittorrent'))
@@ -62,17 +64,21 @@ export class WolfmaxScraper extends Scraper {
   }
 
   protected processMessage(message: ScraperRequest): Promise<Magnet[]> {
+    console.log('WOLFMAX: Processing message', message);
     if (message.seasonNum && message.episodeNum) {
       return this.getEpisodeLinks(
         message.spanishTitle || message.title,
         message.seasonNum,
         message.episodeNum,
       );
-    } else {
+    } else if (message.title && message.year) {
       return this.getMovieLinks(
         message.spanishTitle || message.title,
         message.year,
       );
+    } else {
+      console.log('Invalid message', message);
+      return Promise.resolve([]);
     }
   }
 
@@ -81,9 +87,20 @@ export class WolfmaxScraper extends Scraper {
       console.log('Waiting for cache...');
       await delay(1000);
     }
+    this.cache = await this.getCacheFromTelegram();
     console.log(`Searching for ${title} (${year}) in cache...`);
+    const slugTitle = slugify(title);
+    if (!slugTitle) {
+      console.log('Invalid title', title);
+      return [];
+    }
     const torrents = this.cache.filter(
-      (message: any) => slugify(message.message).includes(slugify(title)) && message.message.includes(`_${year} `));
+      (message: any) => {
+        const messageTitle = message.message.split(' ')[0];
+        return slugify(messageTitle) === `${slugTitle}${year}`;
+      },
+    );
+    console.log(`Found ${torrents.length} torrents for ${title} (${year})`);
     return this.getTorrentsInfo(torrents);
   }
 
@@ -92,13 +109,26 @@ export class WolfmaxScraper extends Scraper {
       console.log('Waiting for cache...');
       await delay(1000);
     }
+    this.cache = await this.getCacheFromTelegram();
     console.log('Searching for', title, seasonNum, episodeNum, 'in cache...');
-    const torrents = this.cache.filter((message: any) =>
-      slugify(message.message).includes(slugify(title))
-      && message.message.includes(` #Cap_${seasonNum}${episodeNum.padStart(2, '0')} `));
+    const slugTitle = slugify(title);
+    if (!slugTitle) {
+      console.log('Invalid title', title);
+      return [];
+    }
+    const torrents = this.cache.filter(
+      (message: any) => {
+        const splitMessage = message.message.split(' ');
+        const messageTitle = splitMessage[0];
+        const episode = splitMessage[2];
+        return slugify(messageTitle) === slugTitle
+        && episode === `#Cap_${seasonNum}${episodeNum.padStart(2, '0')}`;
+      },
+    );
+    console.log(`Found ${torrents.length} torrents for ${title} (${seasonNum}x${episodeNum})`);
     return this.getTorrentsInfo(torrents);
   }
-  
+
   async getTorrentsInfo(torrents: any[]): Promise<Magnet[]> {
     const magnets: Magnet[] = [];
     for (const torrent of torrents) {
