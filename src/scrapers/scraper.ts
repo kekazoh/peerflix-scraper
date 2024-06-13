@@ -1,6 +1,6 @@
 import { EventsConsumer } from '../events/consumer';
 import { EventsProducer } from '../events/producer';
-import { Magnet, MagnetData, ScraperRequest, Torrent } from '../interfaces';
+import { Magnet, MagnetData, ScraperRequest, SeedsNPeers, Torrent } from '../interfaces';
 import { getParamFromMagnet } from '../lib/strings';
 import { decodeTorrentFile, magnetURIEncode } from '../lib/torrent';
 
@@ -11,14 +11,26 @@ abstract class Scraper {
 
   public platform: string;
 
+  public trackers: string;
+
   constructor(platform: string) {
     this.platform = platform;
     // Initialize Kafka consumer
     this.consumer = new EventsConsumer(`${platform}-scraper`);
     this.producer = new EventsProducer();
+    this.trackers = '';
+  }
+
+  private async getTrackerList(): Promise<string> {
+    const res = await fetch('https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt');
+    const text = await res.text();
+    const trackers = text.split('\n').filter((line) => line.length > 0);
+    return '&tr=' + trackers.join('&tr=');
   }
 
   public async run(): Promise<void> {
+    this.trackers = await this.getTrackerList();
+    console.log('Fetched trackers', this.trackers);
     // Connect to Kafka
     await this.producer.connect();
     // Start consuming messages
@@ -28,8 +40,10 @@ abstract class Scraper {
         const magnets = await this.processMessage(message);
         for (const magnet of magnets) {
           const magnetMessage = { ...magnet, cacheId: message.cacheId };
-          console.log('Producing magnet', magnetMessage);
-          await this.producer.produce('magnets', JSON.stringify(magnetMessage), message.cacheId);
+          console.log('Checking seeds and peers for magnet', magnetMessage);
+          const seeds = await this.getSeedersAndPeers(magnet.magnetUrl);
+          console.log('Producing magnet', { ...magnetMessage, ...seeds });
+          await this.producer.produce('magnets', JSON.stringify({ ...magnetMessage, ...seeds }), message.cacheId);
         }
       } catch (err) {
         console.error('Error processing message', err);
@@ -59,6 +73,26 @@ abstract class Scraper {
       size: torrent?.info.length ? `${Math.round(torrent?.info.length / (1024 ** 3) * 100) / 100} GB` : undefined,
       files: torrent?.info.files || [],
     };
+  }
+
+  async getSeedersAndPeers(magnet: string): Promise<SeedsNPeers> {
+    const queryParams = new URLSearchParams({
+      magnet: magnet + this.trackers,
+    });
+    const res = await fetch(
+      'https://checker.openwebtorrent.com/check?' + queryParams.toString(),
+    );
+    const data = await res.json() as { seeds?: number, peers?: number, error?: { code: number, message: string } };
+    const { seeds: seed, peers: peer } = data;
+    if (data.error?.code) {
+      console.warn('Error checking seeds and peers', data.error.message);
+      return {};
+    }
+    if (res.status === 200 && !data.error && seed !== undefined && peer !== undefined) {
+      return { seed: data.seeds, peer: data.peers };
+    }
+    console.warn('Error checking seeds and peers', data);
+    return {};
   }
 }
 

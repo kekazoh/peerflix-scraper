@@ -43,3 +43,8 @@ export interface Torrent {
   infoHash: string;
   files: string[];
 }
+
+export interface SeedsNPeers {
+  seed?: number;
+  peer?: number;
+}
