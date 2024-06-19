@@ -7,9 +7,10 @@ export class EventsConsumer {
   private consumer: Consumer;
 
   constructor(groupId: string) {
+    const KAFKA_BROKERS = process.env.KAFKA ? process.env.KAFKA.split(',') : ['localhost:19092'];
     this.kafka = new Kafka({
       clientId: 'peerflix-scraper',
-      brokers: [process.env.KAFKA || 'localhost:19092'],
+      brokers: KAFKA_BROKERS,
     });
 
     this.consumer = this.kafka.consumer({ groupId });
