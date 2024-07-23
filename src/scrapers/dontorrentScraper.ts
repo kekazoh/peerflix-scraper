@@ -7,7 +7,7 @@ const SOURCE = 'DonTorrent';
 
 export class DontorrentScraper extends Scraper {
 
-  baseUrl: string = 'https://dontorrent.cologne';
+  baseUrl: string = 'https://dontorrent.dance';
 
   headers: Record<string, string>;
 
