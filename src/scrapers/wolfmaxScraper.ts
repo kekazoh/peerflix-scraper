@@ -47,25 +47,20 @@ export class WolfmaxScraper extends Scraper {
   }
 
   async getCacheFromTelegram(): Promise<any> {
-    let reconnected = false;
     if (!this.client.connected) {
-      reconnected = true;
-      assert(TELEGRAM_APP_ID && TELEGRAM_API_KEY, 'TELEGRAM_APP_ID && TELEGRAM_API_KEY are required');
-      this.client = new TelegramClient(
-        TELEGRAM_SESSION,
-        parseInt(TELEGRAM_APP_ID),
-        TELEGRAM_API_KEY,
-        { connectionRetries: 5 },
-      );
+      await this.client.start({
+        phoneNumber: async () => '',
+        phoneCode: async () => '',
+        onError: (err) => console.log(err),
+      });
     }
-    if (!this.cache || reconnected) {
-      this.cache = null;
-      const messages = await this.client.getMessages(TELEGRAM_CHANNEL) as any as TorrentMessage[];
-      return messages
-        .filter((message: TorrentMessage) => (message.file?.media?.mimeType === 'application/x-bittorrent'))
-        .map((message: TorrentMessage) => ({ message: message.message, file: message.file.media, id: message.id }));
+    if (this.cache) {
+      return this.cache;
     }
-    return this.cache;
+    const messages = await this.client.getMessages(TELEGRAM_CHANNEL) as any as TorrentMessage[];
+    return messages
+      .filter((message: TorrentMessage) => (message.file?.media?.mimeType === 'application/x-bittorrent'))
+      .map((message: TorrentMessage) => ({ message: message.message, file: message.file.media, id: message.id }));
   }
 
   protected processMessage(message: ScraperRequest): Promise<Magnet[]> {
