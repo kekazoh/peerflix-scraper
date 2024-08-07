@@ -4,10 +4,11 @@ import Scraper from './scraper';
 import { Magnet, ScraperRequest } from '../interfaces';
 
 const SOURCE = 'DonTorrent';
+const DEFAULT_URL = 'https://dontorrent.earth';
 
 export class DontorrentScraper extends Scraper {
 
-  baseUrl: string = 'https://dontorrent.dance';
+  baseUrl: string = process.env.BASE_URL || DEFAULT_URL;
 
   headers: Record<string, string>;
 

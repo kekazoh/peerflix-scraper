@@ -3,12 +3,11 @@ import { slugify } from '../lib/strings';
 import Scraper from './scraper';
 import { ScraperRequest, Magnet } from '../interfaces';
 
-const DEFAULT_URL = 'https://www15.mejortorrent.rip/';
-
+const DEFAULT_URL = 'https://www19.mejortorrent.zip/';
 
 export class MejortorrentScraper extends Scraper {
   
-  baseUrl: string = DEFAULT_URL;
+  baseUrl: string = process.env.BASE_URL || DEFAULT_URL;
 
   constructor() {
     super('mejortorrent');
