@@ -3,7 +3,7 @@ import { slugify } from '../lib/strings';
 import Scraper from './scraper';
 import { ScraperRequest, Magnet } from '../interfaces';
 
-const DEFAULT_URL = 'https://www19.mejortorrent.zip/';
+const DEFAULT_URL = 'https://www20.mejortorrent.zip/';
 
 export class MejortorrentScraper extends Scraper {
   
@@ -36,7 +36,7 @@ export class MejortorrentScraper extends Scraper {
       const searchable = title.replace(/[&;:,)(]/g, '');
       const encodedTitle = encodeURI(searchable);
       const searchUrl = `${this.baseUrl}busqueda?q=${encodedTitle}`;
-      // console.log('MT - searchURL', searchUrl);
+      console.log('MT - searchURL', searchUrl);
       const result = await fetch(searchUrl);
       const $ = load(await result.text());
       const movies = $('.mb-2').toArray();
@@ -44,7 +44,7 @@ export class MejortorrentScraper extends Scraper {
         const movieLink = $(value).find('a').first();
         const foundTitle = slugify(movieLink.text().split('.')[0]);
         const category = $(value).find('span').last().text();
-        // console.log(`MT - found valid item ${movieLink} ${foundTitle} ${category}`);
+        console.log(`MT - found valid item ${movieLink} ${foundTitle} ${category}`);
         if (category === 'peliculas') {
           const link = movieLink.attr('href');
           if (foundTitle.startsWith(slugify(title)) && link) {
@@ -187,4 +187,9 @@ export class MejortorrentScraper extends Scraper {
       return null;
     }
   }
+}
+
+if (require.main === module) {
+  const scraper = new MejortorrentScraper();
+  scraper.getMovieLinks('Five Nights at Freddys', 2023).then(console.log);
 }

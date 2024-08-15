@@ -4,7 +4,7 @@ import Scraper from './scraper';
 import { Magnet, ScraperRequest } from '../interfaces';
 
 const SOURCE = 'DonTorrent';
-const DEFAULT_URL = 'https://dontorrent.earth';
+const DEFAULT_URL = 'https://dontorrent.date';
 
 export class DontorrentScraper extends Scraper {
 
@@ -222,4 +222,9 @@ export class DontorrentScraper extends Scraper {
       return null;
     }
   }
+}
+
+if (require.main === module) {
+  const scraper = new DontorrentScraper();
+  scraper.getMovieLinks('Five Nights at Freddys', 2023).then(console.log);
 }
