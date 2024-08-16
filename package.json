@@ -21,6 +21,7 @@
     "bencode-ts": "^1.0.1",
     "cheerio": "^1.0.0-rc.12",
     "kafkajs": "^2.2.4",
+    "puppeteer": "^23.1.0",
     "telegram": "^2.22.2"
   },
   "devDependencies": {

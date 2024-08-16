@@ -6,6 +6,7 @@ import { PopcorntimeScraper } from './scrapers/popcorntimeScraper';
 import { DontorrentScraper } from './scrapers/dontorrentScraper';
 import { MejortorrentScraper } from './scrapers/mejortorrentScraper';
 import { WolfmaxScraper } from './scrapers/wolfmaxScraper';
+import { GrantorrentScraper } from './scrapers/grantorrentScraper';
 
 function initializeScraper(platform: string): Scraper {
   switch (platform) {
@@ -21,6 +22,8 @@ function initializeScraper(platform: string): Scraper {
       return new MejortorrentScraper();
     case 'wolfmax':
       return new WolfmaxScraper();
+    case 'grantorrent':
+      return new GrantorrentScraper();
     default:
       throw new Error(`Invalid platform: ${platform}`);
   }
