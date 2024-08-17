@@ -17,7 +17,7 @@ export class GrantorrentScraper extends Scraper {
 
   constructor() {
     super('grantorrent');
-    puppeteer.launch({ headless: true }).then((browser) => {
+    puppeteer.launch({ headless: true, args: ['--no-sandbox'] }).then((browser) => {
       this.browser = browser;
     });
   }
@@ -189,8 +189,7 @@ export class GrantorrentScraper extends Scraper {
           try {
             await page.goto(`${this.baseUrl}${torrentLink}`, { waitUntil: 'networkidle2' });
           } catch (error) {
-            // Ignore this error
-            console.log('GRANTORRENT - torrent download error', error);
+            console.log('GRANTORRENT - torrent download error, Ignoring');
           }
           await sleep(1000);
           const torrFile = await fs.readFileSync(`/tmp/torrentFiles/${torrentLink.split('/').pop()}`);
