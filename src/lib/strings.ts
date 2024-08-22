@@ -18,7 +18,7 @@ export const slugify = (str: string): string => {
 
 export const extractQuality = (title: string): string => {
   const regexMatch = title.match(
-    /.*(Screener|CAM|720p|1080p|2160p|3D|4K|HDRip|HDTV|MicroHD|BDRip|BRRip|WEBRip|Bluray Rip|DVDRip).*/i,
+    /.*(720p|1080p|2160p|3D|4K|HDRip|HDTV|MicroHD|BDRip|BRRip|WEBRip|DVDRip|Screener|Bluray([ ]?Rip)?|CAM).*/i,
   );
   return regexMatch && regexMatch.length > 1
     ? regexMatch[1] : '';
