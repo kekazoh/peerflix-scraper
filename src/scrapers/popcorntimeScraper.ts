@@ -4,12 +4,6 @@ import { getParamFromMagnet } from '../lib/strings';
 
 // const SOURCE_NAME = 'PopcornTime';
 const DEFAULT_BASE_URL = 'https://jfper.link';
-const MAGNET2TORRENT_URL = 'https://anonymiz.com/magnet2torrent/magnet2torrent.php?magnet=';
-
-interface Magnet2Torrent {
-  result: boolean;
-  url: string;
-}
 
 interface PopcorntimeResponse {
   title: string;
@@ -116,11 +110,8 @@ export class PopcorntimeScraper extends Scraper {
             cacheId: storageKey,
           } as Magnet;
           if ('file' in torrent) {
-            const dTorrent = await (await fetch(
-              `${MAGNET2TORRENT_URL}${torrent.url}`)).json() as Magnet2Torrent;
-            if ('url' in dTorrent) {
-              const torrFileUrl = dTorrent.url.split('<')[0];
-              const magnetInfo = await this.getMagnetFromTorrentUrl(torrFileUrl);
+            const magnetInfo = await this.getTorrentFromMagnet(torrent.url);
+            if (magnetInfo) {
               magnet.size = magnet.size || magnetInfo.size || undefined;
               for (const [index, file] of (magnetInfo.files || []).entries()) {
                 const filename = Buffer.from(file.path[0]).toString();

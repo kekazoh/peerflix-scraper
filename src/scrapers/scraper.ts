@@ -4,6 +4,13 @@ import { Magnet, MagnetData, ScraperRequest, SeedsNPeers, Torrent } from '../int
 import { getParamFromMagnet } from '../lib/strings';
 import { decodeTorrentFile, magnetURIEncode } from '../lib/torrent';
 
+const MAGNET2TORRENT_URL = 'https://anonymiz.com/magnet2torrent/magnet2torrent.php?magnet=';
+
+interface Magnet2Torrent {
+  result: boolean;
+  url: string;
+}
+
 abstract class Scraper {
   protected consumer: EventsConsumer;
 
@@ -94,6 +101,24 @@ abstract class Scraper {
     console.warn('Error checking seeds and peers', data);
     return {};
   }
+
+  async getTorrentFromMagnet(magnet: string): Promise<MagnetData | null> {
+    try {
+      const dTorrent = await (await fetch(
+        `${MAGNET2TORRENT_URL}${magnet}`)).json() as Magnet2Torrent;
+      if ('url' in dTorrent) {
+        console.log('Found torrent file', dTorrent.url);
+        const torrFileUrl = dTorrent.url.split('<')[0];
+        const magnetInfo = await this.getMagnetFromTorrentUrl(torrFileUrl);
+        if (magnetInfo) return magnetInfo;
+      }
+      return null;
+    } catch (error) {
+      console.log('Error getting torrent from magnet', error);
+      return null;
+    }
+  }
+      
 }
 
 export default Scraper;

@@ -28,7 +28,7 @@ export const decodeTorrentFile = async (torrent: Buffer): Promise<Torrent | null
     result.infoHash = shasum.digest('hex');
     return result;
   } catch (error) {
-    console.log(error);
+    console.log('ERROR DECODING TORRENT FILE');
     return null;
   }
 };
@@ -85,3 +85,10 @@ export const magnetURIEncode = (obj: Torrent): string => {
 
   return result;
 };
+
+export function getLegibleSizeFromBytesLength(bytes: number): string {
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  if (bytes === 0) return '0B';
+  const i = Math.floor(Math.log(Number(bytes)) / Math.log(1024));
+  return `${(Number(bytes) / Math.pow(1024, i)).toFixed(2)} ${sizes[i]}`;
+}
