@@ -5,7 +5,7 @@ import { Magnet, ScraperRequest } from '../interfaces';
 import Scraper from './scraper';
 import { getLegibleSizeFromBytesLength } from '../lib/torrent';
 
-const SOURCE = 'wolfmax4k';
+const SOURCE = 'Wolfmax4k';
 const BASE_URL = 'https://btdig.com';
 
 export class Wolfmax4kScraper extends Scraper {
@@ -29,7 +29,7 @@ export class Wolfmax4kScraper extends Scraper {
   }
 
   constructor() {
-    super('wolfmax4k');
+    super(SOURCE);
   }
 
   processStats(stats: any[], $: cheerio.CheerioAPI): Record<string, string | number> {

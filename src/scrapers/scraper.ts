@@ -11,6 +11,13 @@ interface Magnet2Torrent {
   url: string;
 }
 
+interface CheckerResponse {
+  seeds: number;
+  peers: number;
+  extra: { seeds: number, peers: number }[];
+  error?: { code: number, message: string };
+}
+
 abstract class Scraper {
   protected consumer: EventsConsumer;
 
@@ -89,14 +96,17 @@ abstract class Scraper {
     const res = await fetch(
       'https://checker.openwebtorrent.com/check?' + queryParams.toString(),
     );
-    const data = await res.json() as { seeds?: number, peers?: number, error?: { code: number, message: string } };
-    const { seeds: seed, peers: peer } = data;
+    const data = await res.json() as CheckerResponse;
+    const { extra } = data;
     if (data.error?.code) {
       console.warn('Error checking seeds and peers', data.error.message);
       return {};
     }
-    if (res.status === 200 && !data.error && seed !== undefined && peer !== undefined) {
-      return { seed: data.seeds, peer: data.peers };
+    if (res.status === 200 && extra.length) {
+      // pick the tracker with max seeds
+      const maxSeed = extra.reduce(
+        (acc: { seeds: number, peers: number }, curr: { seeds: number, peers: number }) => (acc.seeds > curr.seeds ? acc : curr));
+      return { seed: maxSeed.seeds, peer: maxSeed.peers };
     }
     console.warn('Error checking seeds and peers', data);
     return {};
