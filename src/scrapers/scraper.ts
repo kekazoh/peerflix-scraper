@@ -1,6 +1,6 @@
 import { EventsConsumer } from '../events/consumer';
 import { EventsProducer } from '../events/producer';
-import { Magnet, MagnetData, ScraperRequest, SeedsNPeers, Torrent } from '../interfaces';
+import { CheckerResponse, Magnet, MagnetData, ScraperRequest, SeedsNPeers, Torrent } from '../interfaces';
 import { getParamFromMagnet } from '../lib/strings';
 import { decodeTorrentFile, magnetURIEncode } from '../lib/torrent';
 
@@ -9,13 +9,6 @@ const MAGNET2TORRENT_URL = 'https://anonymiz.com/magnet2torrent/magnet2torrent.p
 interface Magnet2Torrent {
   result: boolean;
   url: string;
-}
-
-interface CheckerResponse {
-  seeds: number;
-  peers: number;
-  extra: { seeds: number, peers: number }[];
-  error?: { code: number, message: string };
 }
 
 abstract class Scraper {
@@ -103,9 +96,14 @@ abstract class Scraper {
       return {};
     }
     if (res.status === 200 && extra.length) {
+      const filteredExtra = extra.filter((item) => item.seeds);
       // pick the tracker with max seeds
-      const maxSeed = extra.reduce(
-        (acc: { seeds: number, peers: number }, curr: { seeds: number, peers: number }) => (acc.seeds > curr.seeds ? acc : curr));
+      const maxSeed = filteredExtra.reduce(
+        (
+          acc: { seeds: number, peers: number },
+          curr: { seeds: number, peers: number }) => 
+          ( acc.seeds > curr.seeds ? acc : curr),
+        { seeds: 0, peers: 0 });
       return { seed: maxSeed.seeds, peer: maxSeed.peers };
     }
     console.warn('Error checking seeds and peers', data);

@@ -48,3 +48,10 @@ export interface SeedsNPeers {
   seed?: number;
   peer?: number;
 }
+
+export interface CheckerResponse {
+  seeds: number;
+  peers: number;
+  extra: { seeds: number, peers: number }[];
+  error?: { code: number, message: string };
+}
