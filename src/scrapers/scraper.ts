@@ -61,9 +61,10 @@ abstract class Scraper {
   protected abstract processMessage(message: ScraperRequest): Promise<Magnet[]>;
 
   async getMagnetFromTorrentUrl(fullUrl: string, referer?: string) : Promise<MagnetData> {
+    const url = new URL(fullUrl);
     const headers = new Headers();
     if (referer) headers.append('referer', referer);
-    const torrentfile = await fetch(fullUrl, {
+    const torrentfile = await fetch(url, {
       headers,
     });
     const torrdata = await torrentfile.arrayBuffer();

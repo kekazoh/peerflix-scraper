@@ -73,11 +73,17 @@ export class SolidtorrentsScraper extends Scraper {
         const stats = this.processStats($(value).find('div.stats div').toArray(), $);
         const magnetUrl = $(value).find('a.dl-magnet').attr('href');
         const torrentUrl = $(value).find('a.dl-torrent').attr('href');
-        //console.log('SOLIDTORRENTS torrentUrl', torrentUrl);
-        //console.log('SOLIDTORRENTS magnetUrl', magnetUrl);
-        const magnetData = await this.getMagnetFromTorrentUrl(torrentUrl as string);
+        console.log('SOLIDTORRENTS torrentUrl', torrentUrl);
+        console.log('SOLIDTORRENTS magnetUrl', magnetUrl);
+        let magnetData;
+        try {
+          magnetData = await this.getMagnetFromTorrentUrl(torrentUrl as string);
+        } catch (error) {
+          console.log('Could not get magnet from torrent url, trying magnet2torrent...');
+          magnetData = await this.getTorrentFromMagnet(magnetUrl as string);
+        }
         let fileIdx = undefined;
-        if (magnetData.files?.length && storageKey.includes(':')) { // Si es un episodio, buscar el archivo correcto
+        if (magnetData?.files?.length && storageKey.includes(':')) { // Si es un episodio, buscar el archivo correcto
           const [id, season, episode] = storageKey.split(':');
           console.log('id', id);
           const paddedEpisode = `${episode}`.padStart(2, '0');
@@ -90,7 +96,6 @@ export class SolidtorrentsScraper extends Scraper {
             }
           }
         }
-        //console.log('SOLIDTORRENTS magnetUrl', magnetUrl);
         if (magnetUrl) {
           const infoHash = getParamFromMagnet(magnetUrl, 'xt').split(':').pop() as string;
           const magnet = {
@@ -134,4 +139,14 @@ export class SolidtorrentsScraper extends Scraper {
       return [];
     }
   }
+}
+
+if (require.main === module) {
+  const scraper = new SolidtorrentsScraper();
+  // scraper.getMovieLinks('Alicia en el pais de las maravillas', 2010, 'tt12451').then( magnets => {
+  //   console.log('MAGNETS', magnets);
+  // });
+  scraper.getEpisodeLinks('Breaking Bad', '5', '16', 'tt21324:5:16').then( magnets => {
+    console.log('MAGNETS', magnets);
+  });
 }
