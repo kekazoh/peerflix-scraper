@@ -1,5 +1,5 @@
 # Use a base image with Node.js installed
-FROM ghcr.io/puppeteer/puppeteer:latest
+FROM ghcr.io/puppeteer/puppeteer:23.2.1
 
 USER root
 
