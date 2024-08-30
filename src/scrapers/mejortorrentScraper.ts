@@ -148,7 +148,22 @@ export class MejortorrentScraper extends Scraper {
       }
       const values = $('tr.border.border-gray-800').toArray();
       for (const value of values) {
-        if ($(value).text().includes(`${season}x${paddedEpisode}`)) {
+        const ep = $(value).children('td').eq(1).text().trim();
+        // use similar strategy to dontorrent to find the episode
+        const episodeRegex = new RegExp('(?<fromEpisode>[0-9]+x[0-9]+)( (al|-) (?<toEpisode>[0-9]+x[0-9]+))?(.*)');
+        const epMatch = ep.match(episodeRegex);
+        const formattedEpisode = `${season}x${paddedEpisode}`;
+        let episodeMatch = false;
+        if (epMatch?.groups?.fromEpisode) {
+          if (epMatch?.groups.toEpisode) {
+            if (formattedEpisode >= epMatch.groups.fromEpisode && formattedEpisode <= epMatch.groups.toEpisode) {
+              episodeMatch = true;
+            }
+          } else if (epMatch.groups.fromEpisode === formattedEpisode) {
+            episodeMatch = true;
+          }
+        }
+        if (episodeMatch) {
           const link = $(value).find('a').first();
           let torrent = $(link).attr('href');
           if (torrent) {
@@ -191,5 +206,6 @@ export class MejortorrentScraper extends Scraper {
 
 if (require.main === module) {
   const scraper = new MejortorrentScraper();
-  scraper.getMovieLinks('Five Nights at Freddys', 2023).then(console.log);
+  // scraper.getMovieLinks('Five Nights at Freddys', 2023).then(console.log);
+  scraper.getEpisodeLinks('Breaking Bad', '1', '1').then(console.log);
 }
