@@ -6,7 +6,7 @@ import { ScraperRequest, Magnet } from '../interfaces';
 const DEFAULT_URL = 'https://www20.mejortorrent.zip/';
 
 export class MejortorrentScraper extends Scraper {
-  
+
   baseUrl: string = process.env.BASE_URL || DEFAULT_URL;
 
   constructor() {
