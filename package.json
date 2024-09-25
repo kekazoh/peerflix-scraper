@@ -15,9 +15,8 @@
     "test:watch": "jest --watch",
     "watch": "tsc -w -p tsconfig.release.json"
   },
-  "author": "",
+  "author": "kekazoh",
   "license": "ISC",
-  "pre-commit": ["lint"],
   "dependencies": {
     "bencode-ts": "^1.0.1",
     "cheerio": "^1.0.0-rc.12",
@@ -45,5 +44,6 @@
     "pre-commit": "^1.2.2",
     "rimraf": "^3.0.2",
     "typescript": "^4.7.4"
-  }
+  },
+  "pre-commit": ["lint"]
 }
