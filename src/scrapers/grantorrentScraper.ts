@@ -12,7 +12,7 @@ const DEFAULT_URL = 'https://grantorrent.wtf';
 export class GrantorrentScraper extends Scraper {
 
   baseUrl: string = process.env.BASE_URL || DEFAULT_URL;
-  
+
   browser: puppeteer.Browser | null = null;
 
   constructor() {

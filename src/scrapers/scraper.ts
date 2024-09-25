@@ -102,7 +102,7 @@ abstract class Scraper {
       const maxSeed = filteredExtra.reduce(
         (
           acc: { seeds: number, peers: number },
-          curr: { seeds: number, peers: number }) => 
+          curr: { seeds: number, peers: number }) =>
           ( acc.seeds > curr.seeds ? acc : curr),
         { seeds: 0, peers: 0 });
       return { seed: maxSeed.seeds, peer: maxSeed.peers };
@@ -127,7 +127,7 @@ abstract class Scraper {
       return null;
     }
   }
-      
+
 }
 
 export default Scraper;

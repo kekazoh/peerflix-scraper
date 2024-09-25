@@ -42,6 +42,8 @@ export interface Torrent {
   announce: string[];
   infoHash: string;
   files: string[];
+  keywords?: string[];
+  urlList?: string[];
 }
 
 export interface SeedsNPeers {

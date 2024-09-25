@@ -8,7 +8,7 @@ const SOURCE = 'BitSearch';
 const BASE_URL = 'https://solidtorrents.to';
 
 export class SolidtorrentsScraper extends Scraper {
-  
+
   protected processMessage(message: ScraperRequest): Promise<Magnet[]> {
     if (!message.title) throw new Error('Title is required');
     if (message.seasonNum && message.episodeNum) {
@@ -63,7 +63,7 @@ export class SolidtorrentsScraper extends Scraper {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       [, season, episode] = storageKey.split(':');
       paddedEpisode = `${episode}`.padStart(2, '0');
-    } 
+    }
     //console.log('FOUND ITEMS', items.length);
     const results: Magnet[] = [];
     for (const value of items) {
@@ -71,7 +71,7 @@ export class SolidtorrentsScraper extends Scraper {
       const foundQuality = extractQuality(foundTitle);
       let titleMatch;
       if (!year) {
-        const showRegex = searchUrl.includes('Temporada') 
+        const showRegex = searchUrl.includes('Temporada')
           ? new RegExp(`${title}(.*)Temporada ${season}(.*)(completa|cap.(.*)(<?fromEpisode>[0-9]+)_(<?toEpisode>[0-9]+))(.*)`, 'i')
           : new RegExp(`${title}(.*)Cap(.*)${season}${paddedEpisode}(.*)`, 'i');
         titleMatch = foundTitle.match(showRegex);
