@@ -4,6 +4,7 @@ import { YtsScraper } from './scrapers/ytsScraper';
 import { SolidtorrentsScraper } from './scrapers/solidtorrentsScraper';
 import { PopcorntimeScraper } from './scrapers/popcorntimeScraper';
 import { DontorrentScraper } from './scrapers/dontorrentScraper';
+import { EsmeraldatorrentScraper } from './scrapers/esmeraldatorrentScraper';
 import { MejortorrentScraper } from './scrapers/mejortorrentScraper';
 import { WolfmaxScraper } from './scrapers/wolfmaxScraper';
 import { Wolfmax4kScraper as WolfmaxBtdigScraper } from './scrapers/wolfmaxbtdigScraper';
@@ -27,6 +28,8 @@ function initializeScraper(platform: string): Scraper {
       return new WolfmaxBtdigScraper();
     case 'grantorrent':
       return new GrantorrentScraper();
+    case 'esmeraldatorrent':
+      return new EsmeraldatorrentScraper();
     default:
       throw new Error(`Invalid platform: ${platform}`);
   }
