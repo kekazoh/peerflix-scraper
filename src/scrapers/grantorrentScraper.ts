@@ -185,7 +185,7 @@ if (require.main === module) {
   scraper.getMovieLinks('Alicia en el pais de las maravillas', 2010).then( magnets => {
     console.log('MAGNETS', magnets);
   });
-  scraper.getEpisodeLinks('Knuckles', '1', '3').then( magnets => {
+  scraper.getEpisodeLinks('Breaking Bad', '4', '2').then( magnets => {
     console.log('MAGNETS', magnets);
   });
 }
