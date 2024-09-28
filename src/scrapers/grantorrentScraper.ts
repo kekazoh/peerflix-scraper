@@ -2,24 +2,15 @@ import { Element, load } from 'cheerio';
 import { slugify } from '../lib/strings';
 import Scraper from './scraper';
 import { Magnet, ScraperRequest } from '../interfaces';
-import * as puppeteer from 'puppeteer';
-import * as fs from 'fs';
-import { sleep } from 'telegram/Helpers';
 
 const SOURCE = 'GranTorrent';
 const DEFAULT_URL = 'https://grantorrent.wtf';
 
 export class GrantorrentScraper extends Scraper {
-
   baseUrl: string = process.env.BASE_URL || DEFAULT_URL;
-  
-  browser: puppeteer.Browser | null = null;
 
   constructor() {
     super('grantorrent');
-    puppeteer.launch({ headless: true, args: ['--no-sandbox'] }).then((browser) => {
-      this.browser = browser;
-    });
   }
 
   protected processMessage(message: ScraperRequest): Promise<Magnet[]> {
@@ -39,15 +30,12 @@ export class GrantorrentScraper extends Scraper {
   }
 
   async getMovieLinks(title: string, year: number): Promise<Magnet[]> {
-    let page: puppeteer.Page | null = null;
     try {
-      if (!this.browser) { this.browser = await puppeteer.launch({ headless: true }); }
-      page = await this.browser.newPage();
       const encodedTitle = encodeURI(title);
       const searchUrl = `${this.baseUrl}/buscar?q=${encodedTitle}`;
       console.log('GRANTORRENT - GETTING MOVIE LINKS', searchUrl);
-      await page.goto(searchUrl);
-      const text = await page.content();
+      const data = await fetch(searchUrl);
+      const text = await data.text();
       const $ = load(text);
       const items = $('div.search-list div div a').toArray();
       const results: Magnet[] = [];
@@ -57,7 +45,7 @@ export class GrantorrentScraper extends Scraper {
         if (foundTitle === slugify(title)) {
           console.log('GRANTORRENT - FOUND', title, $(value).attr('href'));
           console.log('GRANTORRENT - CALLING getMovieInfo with', $(value).attr('href'), year);
-          const magnet = await this.getMovieInfo(page, $(value).attr('href') as string, year);
+          const magnet = await this.getMovieInfo($(value).attr('href') as string, year);
           if (magnet) results.push(magnet);
         }
       }
@@ -65,17 +53,14 @@ export class GrantorrentScraper extends Scraper {
     } catch (error) {
       console.log('DT - ERROR', error);
       return [];
-    } finally {
-      if (page) {
-        await page.close();
-      }
     }
   }
 
-  async getMovieInfo(page: puppeteer.Page, url: string, year: number): Promise<Magnet | null> {
+  async getMovieInfo(url: string, year: number): Promise<Magnet | null> {
     try {
-      await page.goto(url);
-      const $ = load(await page.content());
+      const response = await fetch(url);
+      const text = await response.text();
+      const $ = load(text);
       const torrentLink = $('div.grid div div div a').attr('href');
       console.log('GRANTORRENT - FOUND TORRENT LINK', torrentLink);
       const values = $('div.grid div p.text-neutral-300').toArray();
@@ -86,24 +71,12 @@ export class GrantorrentScraper extends Scraper {
       const foundYear = yearElem ? parseInt($(yearElem).text().split(':')[1], 10) : null;
       console.log('GRANTORRENT - FOUND YEAR', foundYear);
       if (torrentLink && foundYear === year) {
-        const client = await page.target().createCDPSession();
-        await client.send('Page.setDownloadBehavior', {
-          behavior: 'allow',
-          downloadPath: '/tmp/torrentFiles/',
-        });
-        try {
-          await page.goto(`${this.baseUrl}${torrentLink}`, { waitUntil: 'networkidle2' });
-        } catch (error) {
-          // Ignore this error
-          console.log('GRANTORRENT - torrent download error', error);
-        }
-        await sleep(1000);
-        const torrFile = await fs.readFileSync(`/tmp/torrentFiles/${torrentLink.split('/').pop()}`);
-        const buffer = Buffer.from(torrFile);
-        const magnet = await this.getMagnetFromRawTorrent(buffer);
-        await fs.unlinkSync(`/tmp/torrentFiles/${torrentLink.split('/').pop()}`);
+        const magnetData = await this.getMagnetFromTorrentUrl(
+          `${this.baseUrl}${torrentLink}`,
+          this.baseUrl,
+        );
         return {
-          ...magnet,
+          ...magnetData,
           quality: foundFormat,
           language: 'es',
           source: SOURCE,
@@ -117,15 +90,12 @@ export class GrantorrentScraper extends Scraper {
   }
 
   async getEpisodeLinks(title: string, season: string, episode: string): Promise<Magnet[]> {
-    let page: puppeteer.Page | null = null;
     try {
-      if (!this.browser) { this.browser = await puppeteer.launch({ headless: true }); }
-      page = await this.browser.newPage();
       const encodedTitle = encodeURI(`${title} - ${season}ª Temporada`);
       const searchUrl = `${this.baseUrl}/buscar?q=${encodedTitle}`;
       console.log('GRANTORRENT - GETTING EPISODE LINKS', searchUrl);
-      await page.goto(searchUrl);
-      const text = await page.content();
+      const response = await fetch(searchUrl);
+      const text = await response.text();
       const $ = load(text);
       const items = $('div.search-list div div a').toArray();
       const results: Magnet[] = [];
@@ -135,7 +105,7 @@ export class GrantorrentScraper extends Scraper {
         if (foundTitle === slugify(`${title} - ${season}ª Temporada`)) {
           console.log('GRANTORRENT - FOUND', title, $(value).attr('href'));
           console.log('GRANTORRENT - CALLING getEpisodeInfo with', $(value).attr('href'), season, episode);
-          const magnet = await this.getEpisodeInfo(page, $(value).attr('href') as string, season, episode);
+          const magnet = await this.getEpisodeInfo($(value).attr('href') as string, season, episode);
           if (magnet) results.push(magnet);
         }
       }
@@ -143,17 +113,14 @@ export class GrantorrentScraper extends Scraper {
     } catch (error) {
       console.log('DT - ERROR', error);
       return [];
-    } finally {
-      if (page) {
-        await page.close();
-      }
     }
   }
 
-  async getEpisodeInfo(page: puppeteer.Page, url: string, season: string, episode: string): Promise<Magnet | null> {
+  async getEpisodeInfo(url: string, season: string, episode: string): Promise<Magnet | null> {
     try {
-      await page.goto(url);
-      const $ = load(await page.content());
+      const response = await fetch(url);
+      const text = await response.text();
+      const $ = load(text);
       const values = $('div.grid div p.text-neutral-300').toArray();
       const formatElem = values.find((value) => $(value).text().includes('Formato:'));
       const foundFormat = formatElem ? $(formatElem).text().split(':')[1].trim() : 'UNKNOWN';
@@ -181,21 +148,10 @@ export class GrantorrentScraper extends Scraper {
         const torrentLink = $(foundEpisode).find('td a').attr('href');
         console.log('GRANTORRENT - FOUND TORRENT LINK', torrentLink);
         if (torrentLink) {
-          const client = await page.target().createCDPSession();
-          await client.send('Page.setDownloadBehavior', {
-            behavior: 'allow',
-            downloadPath: '/tmp/torrentFiles/',
-          });
-          try {
-            await page.goto(`${this.baseUrl}${torrentLink}`, { waitUntil: 'networkidle2' });
-          } catch (error) {
-            console.log('GRANTORRENT - torrent download error, Ignoring');
-          }
-          await sleep(1000);
-          const torrFile = await fs.readFileSync(`/tmp/torrentFiles/${torrentLink.split('/').pop()}`);
-          const buffer = Buffer.from(torrFile);
-          const magnet = await this.getMagnetFromRawTorrent(buffer);
-          await fs.unlinkSync(`/tmp/torrentFiles/${torrentLink.split('/').pop()}`);
+          const magnet = await this.getMagnetFromTorrentUrl(
+            `${this.baseUrl}${torrentLink}`,
+            this.baseUrl,
+          );
           let fileIdx = undefined;
           if (magnet.files?.length) {
             const regex = new RegExp(`.*${season}.*${paddedEpisode}.*(.mp4|.mkv|.avi)`, 'g');
@@ -226,16 +182,10 @@ export class GrantorrentScraper extends Scraper {
 
 if (require.main === module) {
   const scraper = new GrantorrentScraper();
-  // scraper.getMovieLinks('Alicia en el pais de las maravillas', 2010).then( magnets => {
-  //   console.log('MAGNETS', magnets);
-  //   scraper.browser?.close();
-  //   scraper.browser?.disconnect();
-  //   process.exit(0);
-  // });
-  scraper.getEpisodeLinks('Knuckles', '1', '3').then( magnets => {
+  scraper.getMovieLinks('Alicia en el pais de las maravillas', 2010).then( magnets => {
     console.log('MAGNETS', magnets);
-    scraper.browser?.close();
-    scraper.browser?.disconnect();
-    process.exit(0);
+  });
+  scraper.getEpisodeLinks('Breaking Bad', '4', '2').then( magnets => {
+    console.log('MAGNETS', magnets);
   });
 }
