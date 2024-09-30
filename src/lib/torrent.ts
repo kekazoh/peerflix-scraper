@@ -1,9 +1,11 @@
 import { Bencode } from 'bencode-ts';
 import * as crypto from 'crypto';
 import { Torrent } from '../interfaces';
+import logger from './logger';
 
 export const decodeTorrentFile = async (torrent: Buffer): Promise<Torrent | null> => {
   try {
+    logger.info('Decoding torrent file');
     const fTorrent = Bencode.decode(torrent);
     const result = {
       info: fTorrent.info,
@@ -16,14 +18,16 @@ export const decodeTorrentFile = async (torrent: Buffer): Promise<Torrent | null
     const shasum = crypto.createHash('sha1');
     shasum.update(result.infoBuffer);
     result.infoHash = shasum.digest('hex');
+    logger.info({ infoHash: result.infoHash }, 'Torrent file decoded successfully');
     return result;
   } catch (error) {
-    console.error('ERROR DECODING TORRENT FILE', error);
+    logger.error({ error }, 'Error decoding torrent file');
     throw new Error('Error decoding torrent file');
   }
 };
 
 export const magnetURIEncode = (obj: Torrent): string => {
+  logger.info('Encoding magnet URI');
   const auxObj: Record<string, any> = Object.assign({}, obj); // clone obj, so we can mutate it
 
   // support using convenience names, in addition to spec names
@@ -73,11 +77,12 @@ export const magnetURIEncode = (obj: Torrent): string => {
       });
     });
 
+  logger.info({ magnetURI: result }, 'Magnet URI encoded successfully');
   return result;
 };
 
-
 export function getLegibleSizeFromBytesLength(bytes: number): string {
+  logger.info({ bytes }, 'Converting bytes to legible size');
   const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
   // if bytes is 0 or a negative number, return 0B
   if (bytes <= 0) return '0B';
@@ -86,5 +91,7 @@ export function getLegibleSizeFromBytesLength(bytes: number): string {
   // Get the size in the appropriate unit
   const size = bytes / Math.pow(1024, i);
   // Return the size with 2 decimal places and the appropriate unit
-  return `${size.toFixed(2)} ${sizes[i]}`;
+  const result = `${size.toFixed(2)} ${sizes[i]}`;
+  logger.info({ result }, 'Bytes converted to legible size');
+  return result;
 }
