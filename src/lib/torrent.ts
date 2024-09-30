@@ -19,7 +19,7 @@ export const decodeTorrentFile = async (torrent: Buffer): Promise<Torrent | null
     return result;
   } catch (error) {
     console.error('ERROR DECODING TORRENT FILE', error);
-    return null;
+    throw new Error('Error decoding torrent file');
   }
 };
 

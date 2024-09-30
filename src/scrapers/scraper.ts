@@ -73,7 +73,6 @@ abstract class Scraper {
 
   async getMagnetFromRawTorrent(rawTorrentFile: Buffer): Promise<MagnetData> {
     const torrent = await decodeTorrentFile(rawTorrentFile); // Convert ArrayBuffer to Buffer
-    if (!torrent) throw new Error('Error decoding torrent file');
     const magnet = magnetURIEncode(torrent as Torrent);
     return {
       magnetUrl: magnet,
