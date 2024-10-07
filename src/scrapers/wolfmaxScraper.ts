@@ -15,7 +15,7 @@ interface TorrentMessage {
     fileReference: Buffer;
   };
 }
-const TELEGRAM_CHANNEL = '-1002106865514';
+const TELEGRAM_CHANNEL = process.env.TELEGRAM_CHANNEL || '-1002483296578';
 const TELEGRAM_APP_ID = process.env.TELEGRAM_APP_ID;
 const TELEGRAM_API_KEY = process.env.TELEGRAM_API_KEY;
 const TELEGRAM_SESSION = new StringSession(process.env.TELEGRAM_STRING_SESSION);
