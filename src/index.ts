@@ -8,6 +8,7 @@ import { MejortorrentScraper } from './scrapers/mejortorrentScraper';
 import { WolfmaxScraper } from './scrapers/wolfmaxScraper';
 import { Wolfmax4kScraper as WolfmaxBtdigScraper } from './scrapers/wolfmaxbtdigScraper';
 import { GrantorrentScraper } from './scrapers/grantorrentScraper';
+import { TorrenflixScraper } from './scrapers/torrenflixScraper';
 
 function initializeScraper(platform: string): Scraper {
   switch (platform) {
@@ -27,6 +28,8 @@ function initializeScraper(platform: string): Scraper {
       return new WolfmaxBtdigScraper();
     case 'grantorrent':
       return new GrantorrentScraper();
+    case 'torrenflix':
+      return new TorrenflixScraper();
     default:
       throw new Error(`Invalid platform: ${platform}`);
   }
