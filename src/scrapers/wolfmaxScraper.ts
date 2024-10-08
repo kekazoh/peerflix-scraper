@@ -108,8 +108,9 @@ export class WolfmaxScraper extends Scraper {
     }
     this.cache = await this.getCacheFromTelegram();
     console.log('Searching for', title, seasonNum, episodeNum, 'in cache...');
-    const slugTitle = slugify(title);
-    if (!slugTitle) {
+    // normalize title
+    const normalizedTitle = title.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    if (!normalizedTitle) {
       console.log('Invalid title', title);
       return [];
     }
@@ -117,9 +118,8 @@ export class WolfmaxScraper extends Scraper {
       (message: any) => {
         const splitMessage = message.message.split(' ');
         const messageTitle = splitMessage[0];
-        const episode = splitMessage[2];
-        return slugify(messageTitle) === slugTitle
-        && episode === `#Cap_${seasonNum}${episodeNum.padStart(2, '0')}`;
+        const regex = new RegExp(`#${normalizedTitle.replace(/ /g, '_')}_S${seasonNum.padStart(2, '0')}E${episodeNum.padStart(2, '0')}`);
+        return regex.test(messageTitle);
       },
     );
     console.log(`Found ${torrents.length} torrents for ${title} (${seasonNum}x${episodeNum})`);
@@ -153,10 +153,6 @@ export class WolfmaxScraper extends Scraper {
 
 if (require.main === module) {
   const scraper = new WolfmaxScraper();
-  scraper.getEpisodeLinks('Sweet Tooth', '3', '1').then((magnets) => {
-    console.log(magnets);
-  });
-  scraper.getEpisodeLinks('Sweet Tooth: El niño ciervo', '3', '7').then((magnets) => {
-    console.log(magnets);
-  });
+  scraper.getMovieLinks('Romper el círculo', 2024).then(console.log);
+  scraper.getEpisodeLinks('Sueños de libertad', '11', '54').then(console.log);
 }
