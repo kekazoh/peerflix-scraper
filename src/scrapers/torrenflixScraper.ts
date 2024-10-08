@@ -3,31 +3,47 @@ import { slugify } from '../lib/strings';
 import Scraper from './scraper';
 import { Magnet, ScraperRequest } from '../interfaces';
 
-const SOURCE = 'PeliTorrent';
+const SOURCE = 'Torrenflix';
 const DEFAULT_URL = 'https://torrenflix.com';
 
-export class PelitorrentScraper extends Scraper {
+export class TorrenflixScraper extends Scraper {
 
   baseUrl: string = process.env.BASE_URL || DEFAULT_URL;
 
   constructor() {
-    super('pelitorrent');
+    super('torrenflix');
   }
 
-  protected processMessage(message: ScraperRequest): Promise<Magnet[]> {
+  protected async processMessage(message: ScraperRequest): Promise<Magnet[]> {
     if (!message.title) throw new Error('Title is required');
     if (message.seasonNum && message.episodeNum) {
-      return this.getEpisodeLinks(
-        message.spanishTitle || message.title,
+      const result = await this.getEpisodeLinks(
+        message.title,
         message.year,
         message.seasonNum,
         message.episodeNum,
       );
+      if (result.length === 0) {
+        return this.getEpisodeLinks(
+          message.spanishTitle,
+          message.year,
+          message.seasonNum,
+          message.episodeNum,
+        );
+      }
+      return result;
     } else {
-      return this.getMovieLinks(
-        message.spanishTitle || message.title,
+      const result = await this.getMovieLinks(
+        message.title,
         message.year,
       );
+      if (result.length === 0) {
+        return this.getMovieLinks(
+          message.spanishTitle,
+          message.year,
+        );
+      }
+      return result;
     }
   }
 
@@ -145,7 +161,7 @@ export class PelitorrentScraper extends Scraper {
 }
 
 if (require.main === module) {
-  const scraper = new PelitorrentScraper();
-  scraper.getMovieLinks('Fast & furious 9', 2021).then(console.log);
-  scraper.getEpisodeLinks('El caso sancho', 2024, '1', '3').then(console.log);
+  const scraper = new TorrenflixScraper();
+  scraper.getMovieLinks('Vincent debe morir', 2023).then(console.log);
+  // scraper.getEpisodeLinks('El caso sancho', 2024, '1', '3').then(console.log);
 }
