@@ -8,7 +8,7 @@ const SOURCE = 'BitSearch';
 const BASE_URL = 'https://solidtorrents.to';
 
 export class SolidtorrentsScraper extends Scraper {
-  
+
   protected processMessage(message: ScraperRequest): Promise<Magnet[]> {
     if (!message.title) throw new Error('Title is required');
     if (message.seasonNum && message.episodeNum) {
@@ -53,7 +53,6 @@ export class SolidtorrentsScraper extends Scraper {
   }
 
   async getLinks(searchUrl: string, title: string, storageKey: string, year?: number) : Promise<Magnet[]> {
-    console.log('SOLIDTORRENTS searchUrl', searchUrl);
     const result = await fetch(searchUrl);
     const text = await result.text();
     const $ = cheerio.load(text);
@@ -63,23 +62,21 @@ export class SolidtorrentsScraper extends Scraper {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       [, season, episode] = storageKey.split(':');
       paddedEpisode = `${episode}`.padStart(2, '0');
-    } 
-    //console.log('FOUND ITEMS', items.length);
+    }
     const results: Magnet[] = [];
     for (const value of items) {
       const foundTitle = $(value).find('h5.title.w-100.truncate').text();
       const foundQuality = extractQuality(foundTitle);
       let titleMatch;
       if (!year) {
-        const showRegex = searchUrl.includes('Temporada') 
-          ? new RegExp(`${title}(.*)Temporada ${season}(.*)(completa|cap.(.*)(<?fromEpisode>[0-9]+)_(<?toEpisode>[0-9]+))(.*)`, 'i')
-          : new RegExp(`${title}(.*)Cap(.*)${season}${paddedEpisode}(.*)`, 'i');
+        const showRegex = searchUrl.includes('Temporada')
+          ? new RegExp(`${title} - (.*)Temporada ${season}(.*)(completa|cap.(.*)(<?fromEpisode>[0-9]+)_(<?toEpisode>[0-9]+))(.*)`, 'i')
+          : new RegExp(`${title} - (.*)Cap(.*)${season}${paddedEpisode}(.*)`, 'i');
         titleMatch = foundTitle.match(showRegex);
       } else {
         const movieRegex = new RegExp(`${slugify(title)}(.*)${year}(.*)`, 'i');
         titleMatch = slugify(foundTitle).match(movieRegex);
       }
-      console.log('SOLIDTORRENTS titleMatch', foundTitle, titleMatch);
       if (
         titleMatch &&
         !['SCREENER', 'CAM'].includes(foundQuality.toUpperCase()) // Evitar calidades chungas
@@ -90,12 +87,9 @@ export class SolidtorrentsScraper extends Scraper {
             continue;
           }
         }
-        console.log('SOLIDTORRENTS title checked ok');
         const stats = this.processStats($(value).find('div.stats div').toArray(), $);
         const magnetUrl = $(value).find('a.dl-magnet').attr('href');
         const torrentUrl = $(value).find('a.dl-torrent').attr('href');
-        console.log('SOLIDTORRENTS torrentUrl', torrentUrl);
-        console.log('SOLIDTORRENTS magnetUrl', magnetUrl);
         let magnetData;
         try {
           magnetData = await this.getMagnetFromTorrentUrl(torrentUrl as string);
@@ -104,8 +98,11 @@ export class SolidtorrentsScraper extends Scraper {
           magnetData = await this.getTorrentFromMagnet(magnetUrl as string);
         }
         let fileIdx = undefined;
-        if (magnetData?.files?.length && season && paddedEpisode) { // Si es un episodio, buscar el archivo correcto
-          const regex = new RegExp(`.*${season}.*${paddedEpisode}.*(.mp4|.mkv|.avi)`, 'g');
+        let regex: RegExp = new RegExp('.*(.mp4|.mkv|.avi)', 'g');
+        if (season && paddedEpisode) { // Si es un episodio, buscar el archivo correcto
+          regex = new RegExp(`.*${season}.*${paddedEpisode}.*(.mp4|.mkv|.avi)`, 'g');
+        }
+        if (magnetData?.files?.length) {
           for (const [index, file] of (magnetData.files || []).entries()) {
             const filename = Buffer.from(file.path[0]).toString();
             if (regex.test(filename)) {
@@ -114,7 +111,7 @@ export class SolidtorrentsScraper extends Scraper {
             }
           }
         }
-        if (magnetUrl) {
+        if (magnetUrl && fileIdx !== undefined) {
           const infoHash = getParamFromMagnet(magnetUrl, 'xt').split(':').pop() as string;
           const magnet = {
             ...stats,
@@ -136,7 +133,6 @@ export class SolidtorrentsScraper extends Scraper {
     try {
       const encodedTitle = encodeURI(title.normalize('NFD').replace(/[\u0300-\u036f]/g, ''));
       const searchUrl = `${BASE_URL}/search?q=${encodedTitle}+${year}+castellano&category=1&subcat=2`;
-      //console.log('ST - SEARCH URL', searchUrl);
       return await this.getLinks(searchUrl, title, storageKey, year);
     } catch (error) {
       console.log('ST - ERROR', error);
@@ -146,7 +142,7 @@ export class SolidtorrentsScraper extends Scraper {
 
   async getEpisodeLinks(title: string, season: string, episode: string, storageKey: string): Promise<Magnet[]> {
     try {
-      const encodedTitle = encodeURI(title);
+      const encodedTitle = encodeURI(title.normalize('NFD').replace(/[\u0300-\u036f]/g, ''));
       const paddedEpisode = `${episode}`.padStart(2, '0');
       const searchEpisodeUrl = `${BASE_URL}/search?q=${encodedTitle}+Cap.${season}${paddedEpisode}+castellano&category=1&subcat=2`;
       const resultsEpisode = await this.getLinks(searchEpisodeUrl, title, storageKey);
@@ -165,10 +161,7 @@ export class SolidtorrentsScraper extends Scraper {
 
 if (require.main === module) {
   const scraper = new SolidtorrentsScraper();
-  scraper.getMovieLinks('Alicia en el pais de las maravillas', 2010, 'tt12451').then( magnets => {
-    console.log('MAGNETS', magnets);
-  });
-  scraper.getEpisodeLinks('Breaking Bad', '5', '6', 'tt21324:5:6').then( magnets => {
-    console.log('MAGNETS', magnets);
-  });
+  scraper.getMovieLinks('Alicia en el pais de las maravillas', 2010, 'tt12451').then(console.log);
+  // scraper.getEpisodeLinks('Breaking Bad', '5', '6', 'tt21324:5:6').then(console.log);
+  // scraper.getEpisodeLinks('From', '1', '3', 'tt9813792:1:3').then(console.log);
 }

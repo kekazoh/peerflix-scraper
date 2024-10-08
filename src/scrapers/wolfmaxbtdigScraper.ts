@@ -9,7 +9,7 @@ const SOURCE = 'Wolfmax4k';
 const BASE_URL = 'https://btdig.com';
 
 export class Wolfmax4kScraper extends Scraper {
-  
+
   protected processMessage(message: ScraperRequest): Promise<Magnet[]> {
     if (!message.title) throw new Error('Title is required');
     if (message.seasonNum && message.episodeNum) {
@@ -84,7 +84,7 @@ export class Wolfmax4kScraper extends Scraper {
         const magnetUrl = $(value).find('div.torrent_magnet div a').attr('href');
         let fileIdx, size;
         console.log('WOLFMAX4K magnetUrl', magnetUrl);
-        // Extract files from magnetUrl 
+        // Extract files from magnetUrl
         try {
           const magnetData = await this.getTorrentFromMagnet(magnetUrl as string);
           console.log('WOLFMAX4K magnetData', magnetData);

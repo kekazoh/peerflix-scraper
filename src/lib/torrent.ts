@@ -1,16 +1,6 @@
 import { Bencode } from 'bencode-ts';
 import * as crypto from 'crypto';
-
-
-interface Torrent {
-  info: Record<string, any>;
-  infoHashBuffer?: Buffer;
-  infoBuffer?: Buffer;
-  name: string;
-  announce: string[];
-  infoHash: string;
-  files: string[];
-}
+import { Torrent } from '../interfaces';
 
 export const decodeTorrentFile = async (torrent: Buffer): Promise<Torrent | null> => {
   try {
@@ -28,7 +18,7 @@ export const decodeTorrentFile = async (torrent: Buffer): Promise<Torrent | null
     result.infoHash = shasum.digest('hex');
     return result;
   } catch (error) {
-    console.log('ERROR DECODING TORRENT FILE');
+    console.error('ERROR DECODING TORRENT FILE', error);
     return null;
   }
 };
@@ -86,9 +76,15 @@ export const magnetURIEncode = (obj: Torrent): string => {
   return result;
 };
 
+
 export function getLegibleSizeFromBytesLength(bytes: number): string {
   const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-  if (bytes === 0) return '0B';
-  const i = Math.floor(Math.log(Number(bytes)) / Math.log(1024));
-  return `${(Number(bytes) / Math.pow(1024, i)).toFixed(2)} ${sizes[i]}`;
+  // if bytes is 0 or a negative number, return 0B
+  if (bytes <= 0) return '0B';
+  // Get the index of the size from the sizes array
+  const i = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), sizes.length - 1);
+  // Get the size in the appropriate unit
+  const size = bytes / Math.pow(1024, i);
+  // Return the size with 2 decimal places and the appropriate unit
+  return `${size.toFixed(2)} ${sizes[i]}`;
 }
