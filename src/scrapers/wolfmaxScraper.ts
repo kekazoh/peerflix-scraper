@@ -109,8 +109,8 @@ export class WolfmaxScraper extends Scraper {
     this.cache = await this.getCacheFromTelegram();
     console.log('Searching for', title, seasonNum, episodeNum, 'in cache...');
     // normalize title
-    const normalizedTitle = title.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    if (!normalizedTitle) {
+    const slugTitle = slugify(title);
+    if (!slugTitle) {
       console.log('Invalid title', title);
       return [];
     }
@@ -118,8 +118,10 @@ export class WolfmaxScraper extends Scraper {
       (message: any) => {
         const splitMessage = message.message.split(' ');
         const messageTitle = splitMessage[0];
-        const regex = new RegExp(`#${normalizedTitle.replace(/ /g, '_')}_S${seasonNum.padStart(2, '0')}E${episodeNum.padStart(2, '0')}`);
-        return regex.test(messageTitle);
+        const regex = new RegExp(
+          `#(?<title>.*)_S${seasonNum.padStart(2, '0')}E${episodeNum.padStart(2, '0')}`);
+        const match = regex.exec(messageTitle);
+        return slugify(match?.groups?.title || '') === slugTitle;
       },
     );
     console.log(`Found ${torrents.length} torrents for ${title} (${seasonNum}x${episodeNum})`);
@@ -153,6 +155,7 @@ export class WolfmaxScraper extends Scraper {
 
 if (require.main === module) {
   const scraper = new WolfmaxScraper();
-  scraper.getMovieLinks('Romper el círculo', 2024).then(console.log);
-  scraper.getEpisodeLinks('Sueños de libertad', '11', '54').then(console.log);
+  // scraper.getMovieLinks('Romper el círculo', 2024).then(console.log);
+  // scraper.getEpisodeLinks('Sueños de libertad', '11', '54').then(console.log);
+  scraper.getEpisodeLinks('El señor de los anillos: Los anillos de poder', '2', '8').then(console.log);
 }
