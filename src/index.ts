@@ -9,6 +9,7 @@ import { WolfmaxScraper } from './scrapers/wolfmaxScraper';
 import { Wolfmax4kScraper as WolfmaxBtdigScraper } from './scrapers/wolfmaxbtdigScraper';
 import { GrantorrentScraper } from './scrapers/grantorrentScraper';
 import { TorrenflixScraper } from './scrapers/torrenflixScraper';
+import { Wolfmax4kBt4gScraper } from './scrapers/wolfmaxbt4gScraper';
 
 function initializeScraper(platform: string): Scraper {
   switch (platform) {
@@ -30,6 +31,8 @@ function initializeScraper(platform: string): Scraper {
       return new GrantorrentScraper();
     case 'torrenflix':
       return new TorrenflixScraper();
+    case 'wolfmaxbt4g':
+      return new Wolfmax4kBt4gScraper();
     default:
       throw new Error(`Invalid platform: ${platform}`);
   }
