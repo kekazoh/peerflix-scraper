@@ -21,6 +21,8 @@ export class EventsConsumer {
     await this.consumer.subscribe({ topic: consumeTopic });
 
     await this.consumer.run({
+      partitionsConsumedConcurrently: process.env.CONCURRENT_PARTITIONS 
+        ? parseInt(process.env.CONCURRENT_PARTITIONS, 10) : 1,
       eachMessage: async (payload: EachMessagePayload) => {
         const { topic, partition, message } = payload;
         if (!message.value) return;
