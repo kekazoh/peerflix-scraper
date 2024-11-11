@@ -1,3 +1,4 @@
+<a href='https://ko-fi.com/R6R115U3XO' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://storage.ko-fi.com/cdn/kofi6.png?v=6' border='0' alt='Buy Me a Coffee at ko-fi.com'/></a>
 # peerflix-scraper
 
 This repository defines all the scraper logic for the different websites and sources. Any new scraper should implement the Abstract class `Scraper` which defines all the base methods. The scraper could implement any extra/auxiliary method it needs to achieve its purpose.
