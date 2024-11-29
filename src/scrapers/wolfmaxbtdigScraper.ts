@@ -3,7 +3,7 @@ import * as cheerio from 'cheerio';
 import { slugify, extractQuality, getParamFromMagnet } from '../lib/strings';
 import { Magnet, ScraperRequest } from '../interfaces';
 import Scraper from './scraper';
-import { getLegibleSizeFromBytesLength } from '../lib/torrent';
+import { getFileIdx, getLegibleSizeFromBytesLength } from '../lib/torrent';
 
 const SOURCE = 'Wolfmax4k';
 const BASE_URL = 'https://btdig.com';
@@ -88,26 +88,13 @@ export class Wolfmax4kScraper extends Scraper {
         try {
           const magnetData = await this.getTorrentFromMagnet(magnetUrl as string);
           console.log('WOLFMAX4K magnetData', magnetData);
-          if (magnetData) { // Si es un episodio, buscar el archivo correcto
+          if (magnetData) {
             if (magnetData.files?.length) {
               if (storageKey.includes(':')) {
-                const regex = new RegExp(`.*${season}.*${paddedEpisode}.*(.mp4|.mkv|.avi)`, 'g');
-                for (const [index, file] of (magnetData.files || []).entries()) {
-                  const filename = Buffer.from(file.path[0]).toString();
-                  if (regex.test(filename)) {
-                    fileIdx = index;
-                    break;
-                  }
-                }
+                const [, s, e] = storageKey.split(':');
+                fileIdx = await getFileIdx(magnetData.files, parseInt(s), parseInt(e));
               } else {
-                const regex = new RegExp('.*(.mp4|.mkv|.avi)', 'g');
-                for (const [index, file] of (magnetData.files || []).entries()) {
-                  const filename = Buffer.from(file.path[0]).toString();
-                  if (regex.test(filename)) {
-                    fileIdx = index;
-                    break;
-                  }
-                }
+                fileIdx = await getFileIdx(magnetData.files);
               }
             }
           }
