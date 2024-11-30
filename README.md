@@ -1,3 +1,4 @@
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/R6R115U3XO)
 # peerflix-scraper
 
 This repository defines all the scraper logic for the different websites and sources. Any new scraper should implement the Abstract class `Scraper` which defines all the base methods. The scraper could implement any extra/auxiliary method it needs to achieve its purpose.
