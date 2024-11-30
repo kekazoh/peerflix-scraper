@@ -3,6 +3,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Bencode } from 'bencode-ts';
 import { getLegibleSizeFromBytesLength, decodeTorrentFile, magnetURIEncode } from '../../src/lib/torrent';
 import { Torrent } from '../../src/interfaces';
+import { File } from '../../src/interfaces';
+import { getFileIdx } from '../../src/lib/torrent';
 
 vi.mock('bencode-ts');
 vi.mock('crypto');
@@ -207,5 +209,113 @@ describe('getLegibleSizeFromBytesLength', () => {
   it('should handle negative inputs', () => {
     expect(getLegibleSizeFromBytesLength(-1024)).toBe('0B');
     expect(getLegibleSizeFromBytesLength(-1048576)).toBe('0B');
+  });
+});
+
+describe('getFileIdx', () => {
+  const createMockFile = (path: string | string[], length: number = 1000): File => ({
+    path: Array.isArray(path) ? path.map(p => Buffer.from(p)) : [Buffer.from(path)],
+    length,
+  });
+
+  describe('TV Episode files', () => {
+    it('should find correct episode file with season and episode numbers', async () => {
+      const files = [
+        createMockFile('Show.S01E01.mp4'),
+        createMockFile('Show.S01E02.mp4', 2000),
+        createMockFile('Show.S01E03.mp4'),
+        createMockFile('sample.mp4'),
+      ];
+
+      const idx = await getFileIdx(files, 1, 2);
+      expect(idx).toBe(1);
+    });
+
+    it('should handle different episode naming formats', async () => {
+      const files = [
+        createMockFile('Show.1x01.mp4'),
+        createMockFile('Show.1x02.mp4', 2000),
+        createMockFile('Show.101.mp4'),
+        createMockFile('Show.102.mp4'),
+      ];
+
+      const idx = await getFileIdx(files, 1, 2);
+      expect(idx).toBe(1);
+    });
+
+    it('should handle nested folder structures', async () => {
+      const files = [
+        createMockFile(['Season 1', 'Show.S01E01.mp4']),
+        createMockFile(['Season 1', 'Show.S01E02.mp4'], 2000),
+        createMockFile(['Season 2', 'Show.S02E01.mp4']),
+      ];
+
+      const idx = await getFileIdx(files, 1, 2);
+      expect(idx).toBe(1);
+    });
+
+    it('should prefer larger files when multiple matches exist', async () => {
+      const files = [
+        createMockFile('Show.S01E02.mp4', 500),
+        createMockFile('Show.S01E02.720p.mp4', 1000),
+        createMockFile('Show.S01E02.1080p.mp4', 2000),
+      ];
+
+      const idx = await getFileIdx(files, 1, 2);
+      expect(idx).toBe(2); // Should pick the largest file
+    });
+  });
+
+  describe('Movie files', () => {
+    it('should find the largest video file when no season/episode provided', async () => {
+      const files = [
+        createMockFile('movie.txt', 100),
+        createMockFile('movie.mp4', 1000),
+        createMockFile('sample.mp4', 200),
+        createMockFile('movie.mkv', 2000),
+      ];
+
+      const idx = await getFileIdx(files);
+      expect(idx).toBe(3); // movie.mkv is largest
+    });
+
+    it('should handle multiple video formats', async () => {
+      const files = [
+        createMockFile('movie.mp4', 1000),
+        createMockFile('movie.mkv', 2000),
+        createMockFile('movie.avi', 500),
+      ];
+
+      const idx = await getFileIdx(files);
+      expect(idx).toBe(1); // .mkv file is largest
+    });
+  });
+
+  describe('Edge cases', () => {
+    it('should return undefined when no video files found', async () => {
+      const files = [
+        createMockFile('movie.txt'),
+        createMockFile('movie.rar'),
+        createMockFile('movie.nfo'),
+      ];
+
+      const idx = await getFileIdx(files);
+      expect(idx).toBeUndefined();
+    });
+
+    it('should handle undefined or empty files array', async () => {
+      expect(await getFileIdx(undefined)).toBeUndefined();
+      expect(await getFileIdx([])).toBeUndefined();
+    });
+
+    it('should ignore sample files when larger main file exists', async () => {
+      const files = [
+        createMockFile('movie-sample.mp4', 100),
+        createMockFile('movie.mp4', 1000),
+      ];
+
+      const idx = await getFileIdx(files);
+      expect(idx).toBe(1); // movie.mp4 is the largest file
+    });
   });
 });

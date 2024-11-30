@@ -1,6 +1,6 @@
 import { Bencode } from 'bencode-ts';
 import * as crypto from 'crypto';
-import { Torrent } from '../interfaces';
+import { Torrent, File } from '../interfaces';
 
 export const decodeTorrentFile = async (torrent: Buffer): Promise<Torrent | null> => {
   try {
@@ -87,4 +87,26 @@ export function getLegibleSizeFromBytesLength(bytes: number): string {
   const size = bytes / Math.pow(1024, i);
   // Return the size with 2 decimal places and the appropriate unit
   return `${size.toFixed(2)} ${sizes[i]}`;
+}
+
+export async function getFileIdx(files?: File[], season?: number, episode?: number): Promise<number | undefined> {
+  let fileIdx = undefined;
+  if (files?.length) {
+    const fileRegex = season && episode
+      ? `[S]?${season}[E|x]?${`${episode}`.padStart(2, '0')}.*(.mp4|.mkv|.avi)`
+      : '.*(.mp4|.mkv|.avi)';
+    const filteredFiles = files.filter(file => {
+      const regex = new RegExp(fileRegex, 'g');
+      const filePath = typeof file.path === 'string'
+        ? file.path 
+        : file.path.map(path => Buffer.from(path).toString()).join('/');
+      return regex.test(filePath);
+    });
+    // sort by length descending
+    const sortedFiles = filteredFiles.sort((a, b) => b.length - a.length);
+    if (sortedFiles.length) {
+      fileIdx = files.indexOf(sortedFiles[0]);
+    }
+  }
+  return fileIdx;
 }

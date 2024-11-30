@@ -21,7 +21,7 @@ export interface Magnet {
   fileIdx?: number;
 }
 
-interface File {
+export interface File {
   length: number;
   path: any[];
 }

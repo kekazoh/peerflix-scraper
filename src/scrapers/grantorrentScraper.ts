@@ -2,6 +2,7 @@ import { Element, load } from 'cheerio';
 import { slugify } from '../lib/strings';
 import Scraper from './scraper';
 import { Magnet, ScraperRequest } from '../interfaces';
+import { getFileIdx } from '../lib/torrent';
 
 const SOURCE = 'GranTorrent';
 const DEFAULT_URL = 'https://grantorrent.wtf';
@@ -152,16 +153,7 @@ export class GrantorrentScraper extends Scraper {
             `${this.baseUrl}${torrentLink}`,
             this.baseUrl,
           );
-          let fileIdx = undefined;
-          if (magnet.files?.length) {
-            const regex = new RegExp(`.*${season}.*${paddedEpisode}.*(.mp4|.mkv|.avi)`, 'g');
-            for (const [index, file] of (magnet.files || []).entries()) {
-              const filename = Buffer.from(file.path[0]).toString();
-              if (regex.test(filename)) {
-                fileIdx = index;
-              }
-            }
-          }
+          const fileIdx = await getFileIdx(magnet.files, parseInt(season), parseInt(episode));
           return {
             ...magnet,
             fileIdx,

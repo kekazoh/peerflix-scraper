@@ -3,6 +3,7 @@ import * as cheerio from 'cheerio';
 import { extractQuality, getParamFromMagnet, slugify } from '../lib/strings';
 import { Magnet, ScraperRequest } from '../interfaces';
 import Scraper from './scraper';
+import { getFileIdx } from '../lib/torrent';
 
 const SOURCE = 'BitSearch';
 const BASE_URL = 'https://solidtorrents.to';
@@ -97,20 +98,9 @@ export class SolidtorrentsScraper extends Scraper {
           console.log('Could not get magnet from torrent url, trying magnet2torrent...');
           magnetData = await this.getTorrentFromMagnet(magnetUrl as string);
         }
-        let fileIdx = undefined;
-        let regex: RegExp = new RegExp('.*(.mp4|.mkv|.avi)', 'g');
-        if (season && paddedEpisode) { // Si es un episodio, buscar el archivo correcto
-          regex = new RegExp(`.*${season}.*${paddedEpisode}.*(.mp4|.mkv|.avi)`, 'g');
-        }
-        if (magnetData?.files?.length) {
-          for (const [index, file] of (magnetData.files || []).entries()) {
-            const filename = Buffer.from(file.path[0]).toString();
-            if (regex.test(filename)) {
-              fileIdx = index;
-              break;
-            }
-          }
-        }
+        const fileIdx = season && episode 
+          ? await getFileIdx(magnetData?.files, parseInt(season), parseInt(episode))
+          : await getFileIdx(magnetData?.files);
         if (magnetUrl && fileIdx !== undefined) {
           const infoHash = getParamFromMagnet(magnetUrl, 'xt').split(':').pop() as string;
           const magnet = {

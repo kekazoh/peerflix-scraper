@@ -2,6 +2,7 @@ import { load } from 'cheerio';
 import { slugify } from '../lib/strings';
 import Scraper from './scraper';
 import { ScraperRequest, Magnet } from '../interfaces';
+import { getFileIdx } from '../lib/torrent';
 
 const DEFAULT_URL = 'https://www20.mejortorrent.zip/';
 
@@ -175,14 +176,7 @@ export class MejortorrentScraper extends Scraper {
             }
             const magnetData = await this.getMagnetFromTorrentUrl(torrent, this.baseUrl);
             if (magnetData.magnetUrl.length > 'magnet:?'.length) {
-              let fileIdx = undefined;
-              const regex = new RegExp(`.*${season}.*${paddedEpisode}.*(.mp4|.mkv|.avi)`, 'g');
-              for (const [index, file] of (magnetData.files || []).entries()) {
-                const filename = Buffer.from(file.path[0]).toString();
-                if (regex.test(filename)) {
-                  fileIdx = index;
-                }
-              }
+              const fileIdx = await getFileIdx(magnetData.files, parseInt(season), parseInt(episode));
               const magnet = {
                 ...magnetData,
                 fileIdx,
