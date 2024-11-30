@@ -95,8 +95,8 @@ export async function getFileIdx(files?: File[], season?: number, episode?: numb
     const fileRegex = season && episode
       ? `[S]?${season}[E|x]?${`${episode}`.padStart(2, '0')}.*(.mp4|.mkv|.avi)`
       : '.*(.mp4|.mkv|.avi)';
-    const regex = new RegExp(fileRegex, 'g');
     const filteredFiles = files.filter(file => {
+      const regex = new RegExp(fileRegex, 'g');
       const filePath = typeof file.path === 'string'
         ? file.path 
         : file.path.map(path => Buffer.from(path).toString()).join('/');
