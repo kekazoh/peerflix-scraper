@@ -2,6 +2,7 @@ import { load } from 'cheerio';
 import { slugify } from '../lib/strings';
 import Scraper from './scraper';
 import { Magnet, ScraperRequest } from '../interfaces';
+import { getFileNameFromIndex } from '../lib/torrent';
 
 const SOURCE = 'DonTorrent';
 const DEFAULT_URL = 'https://dontorrent.date';
@@ -220,9 +221,13 @@ export class DontorrentScraper extends Scraper {
                 }
               }
             }
+            const fileName = fileIdx && magnetInfo.files
+              ? getFileNameFromIndex(magnetInfo.files, fileIdx) || undefined
+              : undefined;
             const magnet = {
               ...magnetInfo,
               fileIdx,
+              fileName,
               language: 'es',
               quality: foundFormat,
               source: SOURCE,

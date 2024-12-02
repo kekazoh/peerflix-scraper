@@ -1,6 +1,7 @@
 import Scraper from './scraper';
 import { ScraperRequest, Magnet } from '../interfaces';
 import { getParamFromMagnet } from '../lib/strings';
+import { getFileIdx, getFileNameFromIndex } from '../lib/torrent';
 
 // const SOURCE_NAME = 'PopcornTime';
 const DEFAULT_BASE_URL = 'https://jfper.link';
@@ -113,13 +114,10 @@ export class PopcorntimeScraper extends Scraper {
             const magnetInfo = await this.getTorrentFromMagnet(torrent.url);
             if (magnetInfo) {
               magnet.size = magnet.size || magnetInfo.size || undefined;
-              for (const [index, file] of (magnetInfo.files || []).entries()) {
-                const filename = Buffer.from(file.path[0]).toString();
-                if (torrent.file.split('/').pop() === filename) {
-                  magnet.fileIdx = index;
-                  break;
-                }
-              }
+              magnet.fileIdx = await getFileIdx(magnetInfo.files, magnet.fileIdx);
+              magnet.fileName = magnet.fileIdx && magnetInfo.files
+                ? getFileNameFromIndex(magnetInfo.files, magnet.fileIdx) || undefined
+                : undefined;
             }
           }
           return magnet;

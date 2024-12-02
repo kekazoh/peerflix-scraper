@@ -3,7 +3,7 @@ import * as cheerio from 'cheerio';
 import { extractQuality, getParamFromMagnet, slugify } from '../lib/strings';
 import { Magnet, ScraperRequest } from '../interfaces';
 import Scraper from './scraper';
-import { getFileIdx } from '../lib/torrent';
+import { getFileIdx, getFileNameFromIndex } from '../lib/torrent';
 
 const SOURCE = 'BitSearch';
 const BASE_URL = 'https://solidtorrents.to';
@@ -103,9 +103,13 @@ export class SolidtorrentsScraper extends Scraper {
           : await getFileIdx(magnetData?.files);
         if (magnetUrl && fileIdx !== undefined) {
           const infoHash = getParamFromMagnet(magnetUrl, 'xt').split(':').pop() as string;
+          const fileName = magnetData?.files
+            ? getFileNameFromIndex(magnetData.files, fileIdx) || undefined
+            : undefined;
           const magnet = {
             ...stats,
             fileIdx,
+            fileName,
             magnetUrl,
             infoHash,
             language: 'es',

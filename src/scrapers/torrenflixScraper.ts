@@ -2,6 +2,7 @@ import { load } from 'cheerio';
 import { slugify } from '../lib/strings';
 import Scraper from './scraper';
 import { Magnet, ScraperRequest } from '../interfaces';
+import { getFileIdx, getFileNameFromIndex } from '../lib/torrent';
 
 const SOURCE = 'Torrenflix';
 const DEFAULT_URL = 'https://torrenflix.com';
@@ -100,7 +101,7 @@ export class TorrenflixScraper extends Scraper {
             const episodeNum = $(episodeItem).find('span.num-epi').text();
             if (episodeNum === `${season}x${episode}`) {
               const episodeUrl = $(episodeItem).find('a.lnk-blk').attr('href') as string;
-              const magnets = await this.getElementInfo(episodeUrl, `.*${season}.*${episode}.*(.mp4|.mkv|.avi)`);
+              const magnets = await this.getElementInfo(episodeUrl, season, episode);
               return magnets;
             }
           }
@@ -112,7 +113,7 @@ export class TorrenflixScraper extends Scraper {
     }
   }
 
-  async getElementInfo(url: string, fileRegex: string = '.*(.mp4|.mkv|.avi)'): Promise<Magnet[]> {
+  async getElementInfo(url: string, season?: string, episode?: string): Promise<Magnet[]> {
     try {
       const result = await fetch(url);
       const $ = load(await result.text());
@@ -128,16 +129,12 @@ export class TorrenflixScraper extends Scraper {
             torrentLink,
             this.baseUrl,
           );
-          let fileIdx = undefined;
-          if (magnetInfo.files?.length) {
-            const regex = new RegExp(fileRegex, 'g');
-            for (const [index, file] of (magnetInfo.files || []).entries()) {
-              const filename = Buffer.from(file.path[0]).toString();
-              if (regex.test(filename)) {
-                fileIdx = index;
-              }
-            }
-          }
+          const fileIdx = season && episode
+            ? await getFileIdx(magnetInfo.files, parseInt(season), parseInt(episode))
+            : await getFileIdx(magnetInfo.files);
+          const fileName = magnetInfo.files && fileIdx
+            ? getFileNameFromIndex(magnetInfo.files, fileIdx) || undefined
+            : undefined;
           if (fileIdx === undefined) {
             console.info('PT - VIDEO FILE NOT FOUND');
             continue;
@@ -148,6 +145,7 @@ export class TorrenflixScraper extends Scraper {
             quality: foundQuality,
             source: SOURCE,
             fileIdx,
+            fileName,
           };
           foundMagnets.push(magnet);
         }
