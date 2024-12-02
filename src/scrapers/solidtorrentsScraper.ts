@@ -6,9 +6,10 @@ import Scraper from './scraper';
 import { getFileIdx, getFileNameFromIndex } from '../lib/torrent';
 
 const SOURCE = 'BitSearch';
-const BASE_URL = 'https://solidtorrents.to';
+const DEFAULT_URL = 'https://bitsearch.to';
 
 export class SolidtorrentsScraper extends Scraper {
+  baseUrl: string = process.env.BASE_URL || DEFAULT_URL;
 
   protected processMessage(message: ScraperRequest): Promise<Magnet[]> {
     if (!message.title) throw new Error('Title is required');
@@ -126,7 +127,7 @@ export class SolidtorrentsScraper extends Scraper {
   async getMovieLinks(title: string, year: number, storageKey: string): Promise<Magnet[]> {
     try {
       const encodedTitle = encodeURI(title.normalize('NFD').replace(/[\u0300-\u036f]/g, ''));
-      const searchUrl = `${BASE_URL}/search?q=${encodedTitle}+${year}+castellano&category=1&subcat=2`;
+      const searchUrl = `${this.baseUrl}/search?q=${encodedTitle}+${year}+castellano&category=1&subcat=2`;
       return await this.getLinks(searchUrl, title, storageKey, year);
     } catch (error) {
       console.log('ST - ERROR', error);
@@ -138,9 +139,9 @@ export class SolidtorrentsScraper extends Scraper {
     try {
       const encodedTitle = encodeURI(title.normalize('NFD').replace(/[\u0300-\u036f]/g, ''));
       const paddedEpisode = `${episode}`.padStart(2, '0');
-      const searchEpisodeUrl = `${BASE_URL}/search?q=${encodedTitle}+Cap.${season}${paddedEpisode}+castellano&category=1&subcat=2`;
+      const searchEpisodeUrl = `${this.baseUrl}/search?q=${encodedTitle}+Cap.${season}${paddedEpisode}+castellano&category=1&subcat=2`;
       const resultsEpisode = await this.getLinks(searchEpisodeUrl, title, storageKey);
-      const searchSeasonUrl = `${BASE_URL}/search?q=${encodedTitle}+Temporada+${season}+castellano&category=1&subcat=2`;
+      const searchSeasonUrl = `${this.baseUrl}/search?q=${encodedTitle}+Temporada+${season}+castellano&category=1&subcat=2`;
       const resultsSeason = await this.getLinks(searchSeasonUrl, title, storageKey);
       // return unique concatenated results
       return [...resultsEpisode, ...resultsSeason].filter((value, index, self) => {
@@ -156,6 +157,6 @@ export class SolidtorrentsScraper extends Scraper {
 if (require.main === module) {
   const scraper = new SolidtorrentsScraper();
   scraper.getMovieLinks('Alicia en el pais de las maravillas', 2010, 'tt12451').then(console.log);
-  // scraper.getEpisodeLinks('Breaking Bad', '5', '6', 'tt21324:5:6').then(console.log);
+  scraper.getEpisodeLinks('Breaking Bad', '5', '6', 'tt21324:5:6').then(console.log);
   // scraper.getEpisodeLinks('From', '1', '3', 'tt9813792:1:3').then(console.log);
 }
