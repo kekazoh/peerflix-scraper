@@ -113,9 +113,10 @@ export async function getFileIdx(files?: File[], season?: number, episode?: numb
 
 export function getFileNameFromIndex(files: File[], index: number): string {
   if (files.length > index) {
-    const filePath = typeof files[index].path === 'string'
-      ? files[index].path 
-      : files[index].path.map(path => Buffer.from(path).toString()).join('/');
+    const filePath = (typeof files[index].path === 'string'
+      ? files[index].path
+      : files[index].path.map(path => Buffer.from(path).toString()).join('/')
+    ) as unknown as string;
     return filePath.split('/').pop() || '';
   }
   return '';
