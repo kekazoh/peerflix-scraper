@@ -3,7 +3,7 @@ import * as cheerio from 'cheerio';
 import { extractQuality, getParamFromMagnet, slugify } from '../lib/strings';
 import { Magnet, ScraperRequest } from '../interfaces';
 import Scraper from './scraper';
-import { getFileIdx, getFileNameFromIndex } from '../lib/torrent';
+import { getFileIdx, getFileNameFromIndex, getLegibleSizeFromBytesLength } from '../lib/torrent';
 
 const SOURCE = 'BitSearch';
 const DEFAULT_URL = 'https://bitsearch.to';
@@ -107,10 +107,13 @@ export class SolidtorrentsScraper extends Scraper {
           const fileName = magnetData?.files
             ? getFileNameFromIndex(magnetData.files, fileIdx) || undefined
             : undefined;
+          const size = fileIdx !== undefined && magnetData?.files
+            ? getLegibleSizeFromBytesLength(magnetData.files[fileIdx].length) : undefined;
           const magnet = {
             ...stats,
             fileIdx,
             fileName,
+            size: size || stats.size as string,
             magnetUrl,
             infoHash,
             language: 'es',

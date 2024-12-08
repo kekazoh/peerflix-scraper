@@ -2,7 +2,7 @@ import { load } from 'cheerio';
 import { slugify } from '../lib/strings';
 import Scraper from './scraper';
 import { ScraperRequest, Magnet } from '../interfaces';
-import { getFileIdx, getFileNameFromIndex } from '../lib/torrent';
+import { getFileIdx, getFileNameFromIndex, getLegibleSizeFromBytesLength } from '../lib/torrent';
 
 const DEFAULT_URL = 'https://www20.mejortorrent.zip/';
 
@@ -83,10 +83,19 @@ export class MejortorrentScraper extends Scraper {
             downloadLink,
             this.baseUrl,
           );
+          const fileIdx = await getFileIdx(magnetData.files);
+          const fileName = fileIdx !== undefined && magnetData.files
+            ? getFileNameFromIndex(magnetData.files, fileIdx)
+            : undefined;
+          const size = fileIdx !== undefined && magnetData.files
+            ? getLegibleSizeFromBytesLength(magnetData.files[fileIdx].length)
+            : undefined;
           if (magnetData.magnetUrl.length > 'magnet:?'.length) {
             delete magnetData.files;
             const magnet = {
               ...magnetData,
+              fileName,
+              size: size || magnetData.size,
               language: 'es',
               quality: foundFormat,
               source: 'MejorTorrent',
@@ -177,11 +186,15 @@ export class MejortorrentScraper extends Scraper {
             const magnetData = await this.getMagnetFromTorrentUrl(torrent, this.baseUrl);
             if (magnetData.magnetUrl.length > 'magnet:?'.length) {
               const fileIdx = await getFileIdx(magnetData.files, parseInt(season), parseInt(episode));
-              const fileName = fileIdx && magnetData.files ? getFileNameFromIndex(magnetData.files, fileIdx) || undefined : undefined;
+              const fileName = fileIdx !== undefined && magnetData.files 
+                ? getFileNameFromIndex(magnetData.files, fileIdx) || undefined : undefined;
+              const size = fileIdx !== undefined && magnetData.files
+                ? getLegibleSizeFromBytesLength(magnetData.files[fileIdx].length) : undefined;
               const magnet = {
                 ...magnetData,
                 fileIdx,
                 fileName,
+                size: size || magnetData.size,
                 language: 'es',
                 quality: foundFormat,
                 source: 'MejorTorrent',
@@ -202,6 +215,6 @@ export class MejortorrentScraper extends Scraper {
 
 if (require.main === module) {
   const scraper = new MejortorrentScraper();
-  // scraper.getMovieLinks('Five Nights at Freddys', 2023).then(console.log);
+  scraper.getMovieLinks('Five Nights at Freddys', 2023).then(console.log);
   scraper.getEpisodeLinks('Breaking Bad', '1', '1').then(console.log);
 }

@@ -2,7 +2,7 @@ import { load } from 'cheerio';
 import { slugify } from '../lib/strings';
 import Scraper from './scraper';
 import { Magnet, ScraperRequest } from '../interfaces';
-import { getFileNameFromIndex } from '../lib/torrent';
+import { getFileIdx, getFileNameFromIndex, getLegibleSizeFromBytesLength } from '../lib/torrent';
 
 const SOURCE = 'DonTorrent';
 const DEFAULT_URL = 'https://dontorrent.date';
@@ -105,8 +105,18 @@ export class DontorrentScraper extends Scraper {
                   `https:${link}`,
                   this.baseUrl,
                 );
+                const fileIdx = await getFileIdx(magnetInfo.files);
+                const fileName = fileIdx !== undefined && magnetInfo.files
+                  ? getFileNameFromIndex(magnetInfo.files, fileIdx)
+                  : undefined;
+                const size = fileIdx !== undefined && magnetInfo.files
+                  ? getLegibleSizeFromBytesLength(magnetInfo.files[fileIdx].length)
+                  : undefined;
                 const magnet = {
                   ...magnetInfo,
+                  fileIdx,
+                  fileName,
+                  size: size || magnetInfo.size,
                   language: 'es',
                   quality: foundFormat,
                   source: SOURCE,
@@ -211,22 +221,17 @@ export class DontorrentScraper extends Scraper {
               `https:${link}`,
               this.baseUrl,
             );
-            let fileIdx = undefined;
-            if (magnetInfo.files?.length) {
-              const regex = new RegExp(`.*${season}.*${paddedEpisode}.*(.mp4|.mkv|.avi)`, 'g');
-              for (const [index, file] of (magnetInfo.files || []).entries()) {
-                const filename = Buffer.from(file.path[0]).toString();
-                if (regex.test(filename)) {
-                  fileIdx = index;
-                }
-              }
-            }
-            const fileName = fileIdx && magnetInfo.files
+            const fileIdx = await getFileIdx(magnetInfo.files, parseInt(season), parseInt(episode));
+            const fileName = fileIdx !== undefined && magnetInfo.files
               ? getFileNameFromIndex(magnetInfo.files, fileIdx) || undefined
+              : undefined;
+            const size = fileIdx !== undefined && magnetInfo.files
+              ? getLegibleSizeFromBytesLength(magnetInfo.files[fileIdx].length)
               : undefined;
             const magnet = {
               ...magnetInfo,
               fileIdx,
+              size: size || magnetInfo.size,
               fileName,
               language: 'es',
               quality: foundFormat,

@@ -2,7 +2,7 @@ import { load } from 'cheerio';
 import { slugify } from '../lib/strings';
 import Scraper from './scraper';
 import { Magnet, ScraperRequest } from '../interfaces';
-import { getFileIdx, getFileNameFromIndex } from '../lib/torrent';
+import { getFileIdx, getFileNameFromIndex, getLegibleSizeFromBytesLength } from '../lib/torrent';
 
 const SOURCE = 'Torrenflix';
 const DEFAULT_URL = 'https://torrenflix.com';
@@ -132,9 +132,11 @@ export class TorrenflixScraper extends Scraper {
           const fileIdx = season && episode
             ? await getFileIdx(magnetInfo.files, parseInt(season), parseInt(episode))
             : await getFileIdx(magnetInfo.files);
-          const fileName = magnetInfo.files && fileIdx
+          const fileName = magnetInfo.files && fileIdx !== undefined
             ? getFileNameFromIndex(magnetInfo.files, fileIdx) || undefined
             : undefined;
+          const size = fileIdx !== undefined && magnetInfo.files
+            ? getLegibleSizeFromBytesLength(magnetInfo.files[fileIdx].length) : undefined;
           if (fileIdx === undefined) {
             console.info('PT - VIDEO FILE NOT FOUND');
             continue;
@@ -146,6 +148,7 @@ export class TorrenflixScraper extends Scraper {
             source: SOURCE,
             fileIdx,
             fileName,
+            size,
           };
           foundMagnets.push(magnet);
         }
@@ -161,5 +164,5 @@ export class TorrenflixScraper extends Scraper {
 if (require.main === module) {
   const scraper = new TorrenflixScraper();
   scraper.getMovieLinks('Vincent debe morir', 2023).then(console.log);
-  // scraper.getEpisodeLinks('El caso sancho', 2024, '1', '3').then(console.log);
+  scraper.getEpisodeLinks('El caso sancho', 2024, '1', '3').then(console.log);
 }
