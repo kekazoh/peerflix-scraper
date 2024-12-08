@@ -110,3 +110,33 @@ export async function getFileIdx(files?: File[], season?: number, episode?: numb
   }
   return fileIdx;
 }
+
+
+export async function getFileIdxFromName(fileName: string, files?: File[]): Promise<number | undefined> {
+  let fileIdx = undefined;
+  if (files?.length) {
+    const filteredFiles = files.filter(file => {  
+      const filePath = typeof file.path === 'string'
+        ? file.path
+        : file.path.map(path => Buffer.from(path).toString()).join('/');
+      return filePath === fileName;
+    });
+    // sort by length descending
+    const sortedFiles = filteredFiles.sort((a, b) => b.length - a.length);
+    if (sortedFiles.length) {
+      fileIdx = files.indexOf(sortedFiles[0]);
+    }
+  }
+  return fileIdx;
+}
+
+export function getFileNameFromIndex(files: File[], index: number): string {
+  if (files.length > index) {
+    const filePath = (typeof files[index].path === 'string'
+      ? files[index].path
+      : files[index].path.map(path => Buffer.from(path).toString()).join('/')
+    ) as unknown as string;
+    return filePath.split('/').pop() || '';
+  }
+  return '';
+}

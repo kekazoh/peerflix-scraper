@@ -2,7 +2,7 @@ import { Element, load } from 'cheerio';
 import { slugify } from '../lib/strings';
 import Scraper from './scraper';
 import { Magnet, ScraperRequest } from '../interfaces';
-import { getFileIdx } from '../lib/torrent';
+import { getFileIdx, getFileNameFromIndex, getLegibleSizeFromBytesLength } from '../lib/torrent';
 
 const SOURCE = 'GranTorrent';
 const DEFAULT_URL = 'https://grantorrent.wtf';
@@ -76,8 +76,17 @@ export class GrantorrentScraper extends Scraper {
           `${this.baseUrl}${torrentLink}`,
           this.baseUrl,
         );
+        const fileIdx = await getFileIdx(magnetData.files);
+        const fileName = fileIdx !== undefined && magnetData.files
+          ? getFileNameFromIndex(magnetData.files, fileIdx)
+          : undefined;
+        const size = fileIdx !== undefined && magnetData.files
+          ? getLegibleSizeFromBytesLength(magnetData.files[fileIdx].length)
+          : undefined;
         return {
           ...magnetData,
+          fileName,
+          size: size || magnetData.size,
           quality: foundFormat,
           language: 'es',
           source: SOURCE,
@@ -154,9 +163,13 @@ export class GrantorrentScraper extends Scraper {
             this.baseUrl,
           );
           const fileIdx = await getFileIdx(magnet.files, parseInt(season), parseInt(episode));
+          const fileName = fileIdx !== undefined && magnet.files ? getFileNameFromIndex(magnet.files, fileIdx) || undefined : undefined;
+          const size = fileIdx !== undefined && magnet.files ? getLegibleSizeFromBytesLength(magnet.files[fileIdx].length) : undefined;
           return {
             ...magnet,
             fileIdx,
+            fileName,
+            size: size || magnet.size,
             language: 'es',
             quality: foundFormat,
             source: SOURCE,

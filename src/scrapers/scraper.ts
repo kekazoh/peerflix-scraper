@@ -2,7 +2,7 @@ import { EventsConsumer } from '../events/consumer';
 import { EventsProducer } from '../events/producer';
 import { CheckerResponse, Magnet, MagnetData, ScraperRequest, SeedsNPeers, Torrent } from '../interfaces';
 import { getParamFromMagnet } from '../lib/strings';
-import { decodeTorrentFile, magnetURIEncode } from '../lib/torrent';
+import { decodeTorrentFile, getLegibleSizeFromBytesLength, magnetURIEncode } from '../lib/torrent';
 
 const MAGNET2TORRENT_URL = 'https://anonymiz.com/magnet2torrent/magnet2torrent.php?magnet=';
 
@@ -78,7 +78,7 @@ abstract class Scraper {
     return {
       magnetUrl: magnet,
       infoHash: torrent?.infoHash || getParamFromMagnet(magnet, 'xt').split(':').pop() as string,
-      size: torrent?.info.length ? `${Math.round(torrent?.info.length / (1024 ** 3) * 100) / 100} GB` : undefined,
+      size: torrent?.info.length ? getLegibleSizeFromBytesLength(torrent?.info.length) : undefined,
       files: torrent?.info.files || [],
     };
   }

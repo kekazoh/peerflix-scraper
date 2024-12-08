@@ -1,6 +1,7 @@
 import Scraper from './scraper';
 import { ScraperRequest, Magnet } from '../interfaces';
 import { getParamFromMagnet } from '../lib/strings';
+import { getFileIdxFromName, getLegibleSizeFromBytesLength } from '../lib/torrent';
 
 // const SOURCE_NAME = 'PopcornTime';
 const DEFAULT_BASE_URL = 'https://jfper.link';
@@ -110,16 +111,15 @@ export class PopcorntimeScraper extends Scraper {
             cacheId: storageKey,
           } as Magnet;
           if ('file' in torrent) {
+            console.log('TORRENT FILE', torrent.file);
             const magnetInfo = await this.getTorrentFromMagnet(torrent.url);
             if (magnetInfo) {
-              magnet.size = magnet.size || magnetInfo.size || undefined;
-              for (const [index, file] of (magnetInfo.files || []).entries()) {
-                const filename = Buffer.from(file.path[0]).toString();
-                if (torrent.file.split('/').pop() === filename) {
-                  magnet.fileIdx = index;
-                  break;
-                }
-              }
+              const fileName = torrent.file.split('/').pop();
+              magnet.fileIdx = await getFileIdxFromName(fileName, magnetInfo.files);
+              magnet.fileName = fileName;
+              const size = magnet.fileIdx !== undefined && magnetInfo.files
+                ? getLegibleSizeFromBytesLength(magnetInfo.files[magnet.fileIdx].length) : undefined;
+              magnet.size = size || magnet.size || magnetInfo.size || undefined;
             }
           }
           return magnet;
@@ -132,3 +132,17 @@ export class PopcorntimeScraper extends Scraper {
     }
   }
 }
+
+if (require.main === module) {
+  const scraper = new PopcorntimeScraper();
+  // Example usage for a movie
+  scraper.getMovieLinks('tt0133093', 'someCacheId').then(magnets => {
+    console.log('Movie Magnets:', magnets);
+  });
+
+  // Example usage for an episode
+  scraper.getEpisodeLinks('tt13024830', 9683277, 'someCacheId').then(magnets => {
+    console.log('Episode Magnets:', magnets);
+  });
+}
+

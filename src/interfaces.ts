@@ -19,6 +19,7 @@ export interface Magnet {
   seed?: number;
   size?: string;
   fileIdx?: number;
+  fileName?: string;
 }
 
 export interface File {
