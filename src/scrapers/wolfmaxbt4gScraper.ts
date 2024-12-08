@@ -3,7 +3,7 @@ import * as cheerio from 'cheerio';
 import { slugify, extractQuality, getParamFromMagnet } from '../lib/strings';
 import { Magnet, ScraperRequest } from '../interfaces';
 import Scraper from './scraper';
-import { getLegibleSizeFromBytesLength } from '../lib/torrent';
+import { getFileIdx, getFileNameFromIndex, getLegibleSizeFromBytesLength } from '../lib/torrent';
 
 const SOURCE = 'Wolfmax4k';
 const BASE_URL = 'https://bt4gprx.com';
@@ -79,38 +79,23 @@ export class Wolfmax4kBt4gScraper extends Scraper {
         $(value).text().includes('wolfmax4k')
       ) {
         const magnetUrl = $(value).find('link').text();
-        let fileIdx, size;
+        let fileIdx, size, fileName;
         console.log('WOLFMAX4K magnetUrl', magnetUrl);
         // Extract files from magnetUrl
         try {
           const magnetData = await this.getTorrentFromMagnet(magnetUrl as string);
           console.log('WOLFMAX4K magnetData', magnetData);
           if (magnetData) { // Si es un episodio, buscar el archivo correcto
-            if (magnetData.files?.length) {
-              if (storageKey.includes(':')) {
-                const regex = new RegExp(`.*${season}.*${paddedEpisode}.*(.mp4|.mkv|.avi)`, 'g');
-                for (const [index, file] of (magnetData.files || []).entries()) {
-                  const filename = Buffer.from(file.path[0]).toString();
-                  if (regex.test(filename)) {
-                    fileIdx = index;
-                    break;
-                  }
-                }
-              } else {
-                const regex = new RegExp('.*(.mp4|.mkv|.avi)', 'g');
-                for (const [index, file] of (magnetData.files || []).entries()) {
-                  const filename = Buffer.from(file.path[0]).toString();
-                  if (regex.test(filename)) {
-                    fileIdx = index;
-                    break;
-                  }
-                }
-              }
+            if (season && episode) {
+              fileIdx = await getFileIdx(magnetData.files, parseInt(season), parseInt(episode));
+            } else {
+              fileIdx = await getFileIdx(magnetData.files);
             }
           }
           if (fileIdx !== undefined && magnetData?.files?.length) {
             const fileLength = magnetData.files[fileIdx].length;
             size = getLegibleSizeFromBytesLength(fileLength);
+            fileName = getFileNameFromIndex(magnetData.files, fileIdx) || undefined;
           } else if (magnetData?.size) {
             size = magnetData?.size;
           }
@@ -122,6 +107,7 @@ export class Wolfmax4kBt4gScraper extends Scraper {
           const magnet = {
             size,
             fileIdx,
+            fileName,
             magnetUrl,
             infoHash,
             language: 'es',
